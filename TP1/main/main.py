@@ -1,25 +1,29 @@
 # /usr/bin/python3
 import numpy as np
 import csv
+import typing
 from configparser import ConfigParser
-from main.tour import Tour
-from main.visit import Visit
 
-from main.vehicle import Vehicle
+from tour import Tour
+from visit import Visit
+from vehicle import Vehicle
 
-folder = "Data/lyon_40_1_1/"
+folder = "../Data/lyon_40_1_1/"
 with open(folder+'visits.csv', newline='') as csvfile:
     reader = csv.DictReader(csvfile)
-    listVisits: list[Visit] = []
+    listVisits: typing.List[Visit] = []
     for row in reader:
-        listVisits.append(Visit(int(row['visit_id']), row['visit_name'],
-                          row['visit_lat'], row['visit_lon'], row['demand']))
+        listVisits.append(Visit(int(row['visit_id']),
+                                row['visit_name'],
+                                float(row['visit_lat']),
+                                float(row['visit_lon']),
+                                int(row['demand'])))
 
 
 config = ConfigParser()
 config.read(folder+"vehicle.ini")
 
-distance = np.loadtxt(folder+"distances.txt")
+distances = np.loadtxt(folder+"distances.txt")
 times = np.loadtxt(folder+"times.txt")
 
 
@@ -31,8 +35,12 @@ def getStrFromIni(value: str):
     return config.get("Vehicle", value)
 
 
+for v in listVisits :
+    print(str(v))
+
+
 vroom = Vehicle(
-    6,
+    600,
     getIntFromIni("capacity"),
     getIntFromIni("charge_fast"),
     getIntFromIni("charge_medium"),
@@ -43,10 +51,12 @@ vroom = Vehicle(
 tourVisits = []
 tourVisits.append(listVisits[0])
 tourVisits.append(listVisits[1])
+tourVisits.append(listVisits[3])
+tourVisits.append(listVisits[4])
 tourVisits.append(listVisits[0])
-tourVisits.append(listVisits[1])
+
 tour = Tour(tourVisits, vroom)
-print(tour.calcKilometre(distance))
+print(tour.calculateTour(distances, times))
 
 
 def defineTour():

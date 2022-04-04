@@ -5,11 +5,10 @@ class Visit:
         self.visitLat = visit_lat #Latitude
         self.visitLon = visit_lon #Longitude
         self.demand = demand #Demande en nombre de sacs à livrer
-        self.checked = False #Cette visite a été réalisée par un véhicule. Note : Inutile pour le dépôt
 
     def __str__(self):
-        return "VISIT: visitId="+str(self.visitId)\
-               +" visitName="+self.visitName\
-               +" visitLat="+str(self.visitLat)\
-               +" visit_lon="+str(self.visitLon)\
-               +" demand="+str(self.demand)
+        return "VISIT: visitId=" + str(self.visitId) \
+               + " visitName=" + self.visitName \
+               + " visitLat=" + str(self.visitLat) \
+               + " visit_lon=" + str(self.visitLon) \
+               + " demand=" + str(self.demand)

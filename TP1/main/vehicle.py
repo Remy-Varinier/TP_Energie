@@ -36,3 +36,14 @@ class Vehicle:
 
     def clone(self):
         return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)
+
+    def __str__(self):
+        return "VEHICLE: maxDist=" + str(self.maxDist) \
+               + " capacity=" + str(self.capacity) \
+               + " chargeFast=" + str(self.chargeFast) \
+               + " chargeMedium" + str(self.chargeMedium) \
+               + " chargeSlow=" + str(self.chargeSlow) \
+               + " startTime=" + self.startTime \
+               + " endTime=" + self.endTime \
+               + " distDone=" + str(self.distDone) \
+               + " charge=" + str(self.charge)

@@ -1,3 +1,5 @@
+from cgitb import reset
+from posixpath import split
 import typing
 
 
@@ -12,6 +14,10 @@ class Vehicle:
         self.endTime = end_time
         self.distDone = 0
         self.charge = 0
+
+        startTimeSplit = self.startTime.split(":")
+        self.time = int(startTimeSplit[0]) * 3600 + \
+            int(startTimeSplit[1]) * 60
 
     def addCharge(self, charge) -> bool:
         if self.charge + charge > self.capacity:
@@ -31,8 +37,29 @@ class Vehicle:
         self.distDone += kilometre
         return True
 
+    def canAddKilometer(self, kilometre) -> bool:
+        if self.distDone + kilometre > self.maxDist:
+            return False
+        return True
+
+    def addTime(self, time) -> bool:
+        if self.canAddTime(time) == False:
+            return False
+        self.time += time
+        return True
+
+    def canAddTime(self, time) -> bool:
+        splitEndTime = self.endTime.split(":")
+        if (int(splitEndTime[0]) * 3600 + int(splitEndTime[1]) * 60 < self.time + time):
+            return False
+        return True
+
     def resetKilometer(self):
         self.distDone = 0
+
+    def recharge(self):
+        self.addTime(self.chargeFast)
+        self.resetKilometer()
 
     def clone(self):
         return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)

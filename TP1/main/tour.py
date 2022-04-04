@@ -21,3 +21,7 @@ class Tour:
             i += 1
             j += 1
         return kilometer
+
+    def __str__(self) -> str:
+        for item in range(self.visits):
+            print(self.visits[item].visitId)

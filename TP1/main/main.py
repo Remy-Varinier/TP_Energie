@@ -1,4 +1,5 @@
 # /usr/bin/python3
+from tempfile import tempdir
 import numpy as np
 import csv
 from configparser import ConfigParser
@@ -49,5 +50,33 @@ tour = Tour(tourVisits, vroom)
 print(tour.calcKilometre(distance))
 
 
-def defineTour():
-    return
+def defineTours(allVisits: list[Visit], vehicle: Vehicle, distance) -> list[Tour]:
+    depot = allVisits.pop(0)
+    actualVisit = depot
+    notFull = True
+    v = vehicle.clone()
+    t = buildTour(allVisits, v, depot)
+    while len(allVisits) > 0:
+        v = vehicle.clone()
+        t: tuple = buildTour(t[0], v, depot)
+        return None
+
+
+def buildTour(listVist: list[Visit], vehicle: Vehicle, depot: Visit) -> tuple(list[Visit], Tour):
+    actualVisit = depot
+    notFull = True
+    while notFull == True:
+        visits = []
+        distMin = distance[actualVisit.visitId][listVist[j].visitId]
+        tempDist = -1
+        futurVistit: Visit = None
+        for j in range(0, len(listVist)):
+            tempDist = distance[actualVisit.visitId][listVist[j].visitId]
+            if distMin > tempDist:
+                futurVisit = listVist[j]
+                distMin = tempDist
+        if vehicle.addKilometer(distMin + distance[futurVisit.visitId][depot.visitId]) == False:
+            notFull = False
+        visits.append(futurVisit)
+        vehicle.removeCharge(futurVisit.demand)
+    return (visits, Tour(visits, vehicle))

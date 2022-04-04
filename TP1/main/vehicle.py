@@ -19,6 +19,12 @@ class Vehicle:
         self.charge += charge
         return True
 
+    def removeCharge(self, charge) -> bool:
+        if self.charge - charge < 0:
+            return False
+        self.charge -= charge
+        return True
+
     def addKilometer(self, kilometre) -> bool:
         if self.distDone + kilometre > self.maxDist:
             return False
@@ -27,3 +33,6 @@ class Vehicle:
 
     def resetKilometer(self):
         self.distDone = 0
+
+    def clone(self):
+        return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)

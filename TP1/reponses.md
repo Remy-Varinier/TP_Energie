@@ -49,24 +49,24 @@ La solution est réalisable si elle respecte toutes les contraintes.
 ### 4) Proposer des instances pour lesquelles il n’existe pas de solution réalisable, chacune pour une contrainte différente.
 
 Exemples d'instances :
--S'il existe un lieu à livrer dont la distance minimale pour la rejoindre est supérieure au max_dist de tous les camions
--S'il existe un lieu à livrer réclamant plus de sacs que la capacité max des camions (car selon la consigne, un client ne peut être livré qu'en une seule fois)
+- S'il existe un lieu à livrer dont la distance minimale pour la rejoindre est supérieure au max_dist de tous les camions
+- S'il existe un lieu à livrer réclamant plus de sacs que la capacité max des camions (car selon la consigne, un client ne peut être livré qu'en une seule fois)
 
 
-## Premières heuristiques
+## TP1 : Premières heuristiques
 
 ### 1) Proposer une méthode déterministe pour construire une solution qui passe par le dépôt autant de fois que nécessaire pour respecter toutes les contraintes. Cette méthode doit être polynomiale
 
-Pour chaque camion :
-  Tant que nb(lieux_non_livres) != 0:
-    Rechercher le lieu non livré le plus proche;
-    Si (distance > (max_dist - currentKilometer)):
-      Recharger le véhicule;
-    Si (demande > currentCapacity):
-      Aller au dépôt; 
-    Sinon :
-      Sélectionner le lieu;
-      lieux_non_livres -= 1;
+    Pour chaque camion :
+      Tant que nb(lieux_non_livres) != 0:
+        Rechercher le lieu non livré le plus proche;
+        Si (distance > (max_dist - currentKilometer)):
+          Recharger le véhicule;
+        Si (demande > currentCapacity):
+          Aller au dépôt; 
+        Sinon :
+          Sélectionner le lieu;
+          lieux_non_livres -= 1;
 
 
 #### a. Indiquer la complexité de la méthode.
@@ -76,3 +76,43 @@ Pour chaque camion :
 #### c. Donner un exemple d’instance où la solution renvoyée est optimale.
 
 ### 2) Proposer une ou plusieurs heuristiques non déterministes pour construire une solution admissible. On veut que les solutions produites soient différentes à chaque exécution. Comment définir « différentes » ?
+
+
+
+
+##TP2 : Voisinages
+
+### 1) Proposer au moins trois voisinages de solutions. Dans chaque cas vous indiquerez la taille du voisinage et s'il est de taille polynomiale par rapport à la taille de l'instance. Indiquez aussi pour chaque voisinage s'il peut contenir des solutions non réalisables.
+
+En partant d'une solution quelconque :
+
+- On peut échanger deux visites dans un même tour (donc pour un véhicule),
+- On peut retirer une visite d'un tour pour l'ajouter sur un autre tour,
+- Prendre le dernier morceau d'un tour donné (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur un autre tour.
+
+Tailles des voisinages = S
+
+Complexité :
+
+- O(n^2)
+- O(n^2)
+- a
+
+Renvoie possiblement des solutions non réalisables à partir de solutions réalisables :
+
+- Oui (Non si on recalcule les retours au dépôt + rechargements de façon optimale) 
+- Oui
+- Oui
+
+
+### 2) Descentes : Améliorez la solution obtenue à l'aide de la méthode déterministe en cherchant à chaque pas la meilleure solution d'un voisinage choisi parmi les 3 proposés. Comparer l'exécution et le résultat obtenus avec le cas où on prend la première solution du voisinage rencontrée qui améliore la solution.
+
+### 3) Descentes avec départ "aléatoire". Utiliser l'heuristique constructive non-déterministe pour générer plusieurs solutions et améliorer chacune d'elle.
+
+### Vitesse de rechargement et flotte de véhicules
+
+### 4) Pour chaque taille d'instance, quel est en général le nombre de véhicules nécessaires et le nombre de rechargements de la batterie dans chacun des cas rechargement rapide, rechargement medium, rechargement lent ?
+
+### 5) Quel type de rechargement conseillerez-vous pour cette flotte de véhicules ?
+
+### 6) Si on voulait renouveler la flotte de véhicules pour qu'ils puissent effectuer plus de kilomètres avant rechargement, quelle autonomie minimum serait appropriée pour éviter dans la plupart des cas les rechargmeents en cours de journée ? Quel serait alors la nombre de véhicules nécessaires pour les différentes tailles d'instances ?

@@ -1,8 +1,8 @@
 # /usr/bin/python3
-import typing
-from tempfile import tempdir
 import numpy as np
 import csv
+import typing
+
 from configparser import ConfigParser
 from main.tour import Tour
 from main.visit import Visit
@@ -15,7 +15,7 @@ with open(folder+'visits.csv', newline='') as csvfile:
     listVisits: typing.List[Visit] = []
     for row in reader:
         listVisits.append(Visit(int(row['visit_id']), row['visit_name'],
-                          row['visit_lat'], row['visit_lon'], row['demand']))
+                          row['visit_lat'], row['visit_lon'], int(row['demand'])))
 
 
 config = ConfigParser()
@@ -33,36 +33,75 @@ def getStrFromIni(value: str):
     return config.get("Vehicle", value)
 
 
-def defineTours(allVisits: typing.List[Visit], vehicle: Vehicle, distance) -> typing.List[Tour]:
+vroom = Vehicle(
+    600,
+    getIntFromIni("capacity"),
+    getIntFromIni("charge_fast"),
+    getIntFromIni("charge_medium"),
+    getIntFromIni("charge_slow"),
+    getStrFromIni("start_time"),
+    getStrFromIni("end_time")
+)
+tourVisits = []
+tourVisits.append(listVisits[0])
+tourVisits.append(listVisits[1])
+tourVisits.append(listVisits[0])
+tourVisits.append(listVisits[1])
+#tour = Tour(tourVisits, vroom)
+# print(tour.calcKilometre(distance))
+
+
+def buildTours(allVisits: list[Visit], vehicle: Vehicle, distance) -> list[Tour]:
     depot = allVisits.pop(0)
-    actualVisit = depot
-    notFull = True
     v = vehicle.clone()
-    t = buildTour(allVisits, v, depot)
-    while len(allVisits) > 0:
+    t = buildTour(allVisits, v, depot, distance)
+    result = []
+    result.append(str(t[0]))
+    result = []
+    while len(t[0]) > 0:
         v = vehicle.clone()
-        t: tuple = buildTour(t[0], v, depot)
-        return None
+        t: tuple = buildTour(t[0], v, depot, distance)
+        result.append(str(t[1]))
+    return result
 
 
 def buildTour(listVist: typing.List[Visit], vehicle: Vehicle, depot: Visit) -> typing.Tuple[typing.List[Visit], Tour]:
     actualVisit = depot
     notFull = True
     visits = []
-    while notFull:
-        distMin = distance[actualVisit.visitId][listVist[j].visitId]
-        tempDist = -1
-        futurVisit: Visit = None
-        for j in range(0, len(listVist)):
-            tempDist = distance[actualVisit.visitId][listVist[j].visitId]
-            if distMin > tempDist:
-                futurVisit = listVist[j]
-                distMin = tempDist
-        if vehicle.addKilometer(distMin + distance[futurVisit.visitId][depot.visitId]) == False:
+    visits.append(actualVisit)
+    while notFull == True:
+        visits = []
+        futurVisit: Visit = findNearVisit(listVist, actualVisit, distance)
+        distMin = distance[actualVisit.visitId][futurVisit.visitId]
+
+        time = times[actualVisit.visitId][futurVisit.visitId]
+        if vehicle.canAddKilometer(distMin + distance[futurVisit.visitId][depot.visitId]) == False & vehicle.canAddTime(time + times[futurVisit.visitId][depot.visitId]) == False:
             notFull = False
-        visits.append(futurVisit)
-        vehicle.removeCharge(futurVisit.demand)
-    return (visits, Tour(visits, vehicle))
+        else:
+            vehicle.addKilometer(distMin)
+            vehicle.addTime(time)
+            visits.append(futurVisit)
+            vehicle.removeCharge(futurVisit.demand)
+            listVisits.remove(futurVisit)
+            if len(listVisits) == 0:
+                notFull = False
+    return (listVisits, Tour(visits, vehicle))
+
+
+def findNearVisit(listVisit: list[Visit], visit: Visit, distance) -> Visit:
+    distMin = distance[visit.visitId][listVisit[0].visitId]
+    tempDist = -1
+    futurVisit = listVisit[0]
+    for j in range(0, len(listVisit)-1):
+        tempDist = distance[visit.visitId][listVisit[j].visitId]
+        if distMin > tempDist:
+            futurVisit = listVisit[j]
+            distMin = tempDist
+    return futurVisit
+
+
+print(buildTours(listVisits, vroom, distance))
 
 
 def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2Index: int):

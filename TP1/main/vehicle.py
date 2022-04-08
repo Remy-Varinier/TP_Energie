@@ -1,6 +1,12 @@
 from cgitb import reset
+from enum import Enum
 from posixpath import split
 import typing
+
+class ChargeEnum(Enum):
+    FAST = 1
+    MEDIUM = 2
+    SLOW = 3
 
 
 class Vehicle:
@@ -13,52 +19,62 @@ class Vehicle:
         self.startTime = start_time
         self.endTime = end_time
         self.distDone = 0
-        self.charge = 0
+        self.currentCapacity = 0
 
         startTimeSplit = self.startTime.split(":")
         self.time = int(startTimeSplit[0]) * 3600 + \
             int(startTimeSplit[1]) * 60
 
-    def addCharge(self, charge) -> bool:
-        if self.charge + charge > self.capacity:
-            return False
-        self.charge += charge
-        return True
+    def addCapacity(self, charge):
+        if not(self.canAddCapacity(charge)):
+            raise ValueError("Too much capacity to add for this vehicle : "+str(self))
+        self.currentCapacity += charge
 
-    def removeCharge(self, charge) -> bool:
-        if self.charge - charge < 0:
-            return False
-        self.charge -= charge
-        return True
+    def canAddCapacity(self, charge) -> bool:
+        return self.currentCapacity + charge <= self.capacity
 
-    def addKilometer(self, kilometre) -> bool:
-        if self.distDone + kilometre > self.maxDist:
-            return False
+    def removeCapacity(self, charge):
+        if not(self.canRemoveCapacity(charge)):
+            raise ValueError("Too much capacity to remove for this vehicle : "+str(self))
+        self.currentCapacity -= charge
+
+    def canRemoveCapacity(self, charge) -> bool:
+        return self.currentCapacity - charge >= 0
+
+    def setCapacity(self, charge):
+        if not(charge >= 0 or charge <= self.capacity):
+            raise ValueError("Incorrect capacity set for this vehicle : "+str(self))
+        self.currentCapacity = charge
+
+    def addKilometer(self, kilometre):
+        if not(self.canAddKilometer(kilometre)):
+            raise ValueError("Too many kilometers to add for this vehicle : "+str(self))
         self.distDone += kilometre
-        return True
 
     def canAddKilometer(self, kilometre) -> bool:
-        if self.distDone + kilometre > self.maxDist:
-            return False
-        return True
+        return self.distDone + kilometre <= self.maxDist
 
-    def addTime(self, time) -> bool:
-        if self.canAddTime(time) == False:
-            return False
+    def addTime(self, time):
+        if not(self.canAddTime(time)):
+            raise ValueError("Too much time to add for this vehicle : "+str(self))
         self.time += time
-        return True
 
-    def canAddTime(self, time) -> bool:
+    def canAddTime(self, timeAdded: int) -> bool:
         splitEndTime = self.endTime.split(":")
-        if (int(splitEndTime[0]) * 3600 + int(splitEndTime[1]) * 60 < self.time + time):
-            return False
-        return True
+        return int(splitEndTime[0]) * 3600 + int(splitEndTime[1]) * 60 >= self.time + timeAdded
 
     def resetKilometer(self):
         self.distDone = 0
 
-    def recharge(self):
-        self.addTime(self.chargeFast)
+    def recharge(self, rechargeMode=ChargeEnum.FAST):
+        if rechargeMode == ChargeEnum.FAST:
+            self.addTime(self.chargeFast)
+        elif rechargeMode == ChargeEnum.MEDIUM:
+            self.addTime(self.chargeMedium)
+        elif rechargeMode == ChargeEnum.SLOW:
+            self.addTime(self.chargeSlow)
+        else:
+            raise ValueError("Invalid ChargeEnum")
         self.resetKilometer()
 
     def clone(self):
@@ -73,4 +89,4 @@ class Vehicle:
                + " startTime=" + self.startTime \
                + " endTime=" + self.endTime \
                + " distDone=" + str(self.distDone) \
-               + " charge=" + str(self.charge)
+               + " charge=" + str(self.currentCapacity)

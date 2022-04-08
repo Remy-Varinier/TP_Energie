@@ -19,17 +19,17 @@
 ---------------------
 
 Variables de décision :
--Vehicle (un véhicule),
--listeVisites (liste de visites)
+- Vehicle (un véhicule),
+- listeVisites (liste de visites).
 
 Objectif :
-On cherche à minimiser le nombre de kilomètre fait par les tous les camions de livraison
-Fonction objectif : min(sum(calcDist(listeVisites)))
+- On cherche à minimiser le nombre de kilomètre fait par les tous les camions de livraison
+- Fonction objectif : min(sum(calcDist(listeVisites)))
 
 Contraintes :
--La durée totale d'un trajet dans visit_list, y compris les temps de livraison et de rechargement, ne dépasse pas (end_time-start_time).
--Pour tout morceau de trajet entre deux étapes C (passage au dépôt) ou R (recharge) indifféremment, la distance ne doit pas dépasser max_dist.
--Pour tout morceau de trajet entre deux C (passage au dépôt), la capacité d'un camion ne dépasse pas capacity.
+- La durée totale d'un trajet dans visit_list, y compris les temps de livraison et de rechargement, ne dépasse pas (end_time-start_time).
+- Pour tout morceau de trajet entre deux étapes C (passage au dépôt) ou R (recharge) indifféremment, la distance ne doit pas dépasser max_dist.
+- Pour tout morceau de trajet entre deux C (passage au dépôt), la capacité d'un camion ne dépasse pas capacity.
 
 Pour info --- Constantes dans vehicle.ini :
 max_dist, capacity, charge_fast, charge_medium, charge_slow, start_time, end_time,
@@ -41,9 +41,13 @@ distance (distance entre deux dépôts)
 
 ### 2) Comment représenter une solution (en programmation) ?
 
+TODO voir code
+
 ### 3) Comment évaluer une solution réalisable ? Comment évaluer une solution non réalisable ?
 
-La solution est réalisable si elle respecte toutes les contraintes.
+La solution est réalisable si et seulement si elle respecte toutes les contraintes : On souhaite livrer la totalité des sites tout en prenant garde à ce que :
+- Le kilométrage des camions soit cohérent durant tout le trajet (entre deux passages au dépôt ou des recharges, la distance totale ne dépasse jamais max_dist)
+- La capacité totale d'un camion n'est jamais dépassé durant tout le trajet.
 
 
 ### 4) Proposer des instances pour lesquelles il n’existe pas de solution réalisable, chacune pour une contrainte différente.
@@ -71,12 +75,23 @@ Exemples d'instances :
 
 #### a. Indiquer la complexité de la méthode.
 
+Pour chaque lieu -> O(n)\
+Recherche du lieu -> O(n)\
+Total = O(n^2)
+
+
 #### b. Donner un exemple d’instance où la solution renvoyée utilise plus d’un véhicule.
+
+TODO
+
 
 #### c. Donner un exemple d’instance où la solution renvoyée est optimale.
 
+TODO
+
 ### 2) Proposer une ou plusieurs heuristiques non déterministes pour construire une solution admissible. On veut que les solutions produites soient différentes à chaque exécution. Comment définir « différentes » ?
 
+A la place d'une recherche pour sélectionner le prochain lieu non livré, on peut le sélectionner aléatoirement et contrôler s'il est admissible.
 
 
 

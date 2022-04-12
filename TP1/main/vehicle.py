@@ -22,8 +22,7 @@ class Vehicle:
         self.currentCapacity = 0
 
         startTimeSplit = self.startTime.split(":")
-        self.time = int(startTimeSplit[0]) * 3600 + \
-            int(startTimeSplit[1]) * 60
+        self.time = int(startTimeSplit[0]) * 3600 + int(startTimeSplit[1]) * 60 #Moment de la journée en SECONDES
 
     def addCapacity(self, charge):
         if not(self.canAddCapacity(charge)):
@@ -81,6 +80,9 @@ class Vehicle:
         return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)
 
     def __str__(self):
+        second = self.time%60
+        minute = (self.time//60)%60
+        hour = (self.time//3600)%24
         return "VEHICLE: maxDist=" + str(self.maxDist) \
                + " capacity=" + str(self.capacity) \
                + " chargeFast=" + str(self.chargeFast) \
@@ -89,4 +91,5 @@ class Vehicle:
                + " startTime=" + self.startTime \
                + " endTime=" + self.endTime \
                + " distDone=" + str(self.distDone) \
-               + " charge=" + str(self.currentCapacity)
+               + " currentCapacity=" + str(self.currentCapacity) \
+               + " currentTime=" + str(hour) + ":" + str(minute) + ":" + str(second)

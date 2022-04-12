@@ -33,87 +33,6 @@ def getStrFromIni(value: str):
     return config.get("Vehicle", value)
 
 
-def buildTours(allVisits: typing.List[Visit], vehicle: Vehicle, distance) -> typing.List[str]:
-    depot = allVisits.pop(0)
-    v = vehicle.clone()
-    (the_visits, the_tour) = buildTour(allVisits, v, depot, distance)
-    result = [the_tour]
-    while len(the_visits) > 0:
-        v = vehicle.clone()
-        (the_visits, the_tour) = buildTour(the_visits, v, depot, distance)
-        result.append(the_tour)
-    return result
-
-
-def buildTour(listVisit: typing.List[Visit], vehicle: Vehicle, depot: Visit, distance) -> typing.Tuple[typing.List[Visit], str]:
-    currentVisit = depot
-    notFull = True
-    tourRes = str(currentVisit.visitId)
-    vehicle.setCapacity(vehicle.capacity)
-    while notFull:
-        try:
-            futurVisit = findNearestVisit(listVisit, currentVisit, distance)
-            ### Pour plus tard : nearestDepot = findNearestDepot(listVisit, actualVisit, distances)
-        except IndexError:
-            break #La liste de visites restantes est vide, on a fini
-
-        distMin = distance[currentVisit.visitId][futurVisit.visitId]
-        time = times[currentVisit.visitId][futurVisit.visitId]
-
-        if not(vehicle.canAddTime(time + times[futurVisit.visitId][depot.visitId])):
-            #La journée du véhicule est finie
-            notFull = False
-        elif not(vehicle.canAddKilometer(distMin + distance[futurVisit.visitId][depot.visitId])):
-            #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
-            vehicle.addKilometer(distance[currentVisit.visitId][depot.visitId])
-            vehicle.addTime(times[currentVisit.visitId][depot.visitId])
-            tourRes += ",R"
-            vehicle.recharge() #charge FAST
-            currentVisit = depot
-        elif not(vehicle.canRemoveCapacity(futurVisit.demand)):
-            #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
-            vehicle.addKilometer(distance[currentVisit.visitId][depot.visitId])
-            vehicle.addTime(times[currentVisit.visitId][depot.visitId])
-            tourRes += ",C"
-            vehicle.setCapacity(vehicle.capacity)
-            currentVisit = depot
-        else:
-            #On peut effectuer la livraison
-            vehicle.addKilometer(distMin)
-            vehicle.addTime(time)
-            vehicle.removeCapacity(futurVisit.demand)
-            tourRes += ","+str(futurVisit.visitId)
-            currentVisit = futurVisit
-            listVisit.remove(futurVisit)
-            if len(listVisit) == 0:
-                notFull = False
-
-    return (listVisit, tourRes)
-
-
-def findNearestVisit(listVisit: typing.List[Visit], fromVisit: Visit, distance) -> Visit:
-    distMin = distance[fromVisit.visitId][listVisit[0].visitId] #raises IndexError if listVisit is empty!
-    futurVisit = listVisit[0]
-    for j in range(0, len(listVisit)-1):
-        tempDist = distance[fromVisit.visitId][listVisit[j].visitId]
-        if distMin > tempDist:
-            futurVisit = listVisit[j]
-            distMin = tempDist
-    return futurVisit
-
-def findNearestDepot(listVisit: typing.List[Visit], fromVisit: Visit, distance) -> Visit:
-    distMin = distance[fromVisit.visitId][listVisit[0].visitId]  #raises IndexError if listVisit is empty!
-    listDepots = list(filter(lambda x: x.visitName == "Depot", listVisit))
-    futurVisit = None
-    for j in range(0, len(listDepots) - 1):
-        tempDist = distance[fromVisit.visitId][listDepots[j].visitId]
-        if distMin > tempDist:
-            futurVisit = listDepots[j]
-            distMin = tempDist
-    return futurVisit
-
-
-
 
 ### TP1 CONSTRUIRE LES TOURS ###
 vroom = Vehicle(
@@ -125,13 +44,14 @@ vroom = Vehicle(
     getStrFromIni("start_time"),
     getStrFromIni("end_time")
 )
-the_result = buildTours(listVisits, vroom, distances)
+tournoi = Tour(listVisits, vroom)
+the_result = tournoi.buildTours(distances, times)
 for r in the_result:
     print(r)
 
-
+### TP2 CONSTRUIRE LES VOISINAGES ###
 def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2Index: int):
-    """Echange de deux visites dans un même tour.
+    """Echanger deux visites dans un tour.
 
     :param listTours: liste des Tour
     :param tIndex: l'index du Tour à modifier
@@ -144,7 +64,8 @@ def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2In
 
 
 def findVoisinage2(listTours: typing.List[Tour], t1Index: int, t2Index: int, v1Index: int, v2Index: int):
-    """Retirer une visite de T1 et l'ajouter sur T2.
+    """A partir de deux tours T1 et T2 sélectionnés dans une liste de tours,
+    retirer une visite de T1 et l'ajouter sur T2.
 
     :param listTours: liste des Tour
     :param t1Index, t2Index: index des Tour à modifier
@@ -158,7 +79,8 @@ def findVoisinage2(listTours: typing.List[Tour], t1Index: int, t2Index: int, v1I
 
 
 def findVoisinage3(listTours: typing.List[Tour], t1Index: int, t2Index: int):
-    """Prendre le dernier morceau d'un tour donné (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur un autre tour.
+    """A partir de deux tours T1 et T2 sélectionnés dans une liste de tours,
+    prendre le dernier morceau de T1 (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur la fin de T2.
 
     :param listTours: liste des Tour
     :param t1Index: index du Tour à modifier
@@ -179,7 +101,7 @@ def findVoisinage4(listTours: typing.List[Tour], tIndex: int, crIndex: int=0, sh
     :param listTours: liste des Tour
     :param tIndex: l'index du Tour à modifier
     :param crIndex: l'index de l'étape 'C' ou 'R' à retenir
-    :param shift: déplacement de l'élement à effectuer.
+    :param shift: déplacement de l'élement à effectuer (par défaut 1 élement après).
     """
     try:
         itemIndex = listTours[tIndex].findCorRVisits()[crIndex]

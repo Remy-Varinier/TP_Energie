@@ -9,7 +9,7 @@ from main.visit import Visit
 
 from main.vehicle import Vehicle
 
-folder = "Data/lyon_40_1_1/"
+folder = "Data/lyon_150_1_1/"
 with open(folder+'visits.csv', newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     listVisits: typing.List[Visit] = []
@@ -32,6 +32,21 @@ def getIntFromIni(value: str):
 def getStrFromIni(value: str):
     return config.get("Vehicle", value)
 
+def buildTours(remainingVisits: typing.List[Visit], vehicleModel: Vehicle, distanceMatrix, timeMatrix)\
+        -> typing.Tuple[typing.List[Tour], str]:
+    depot = remainingVisits.pop(0)
+    v = vehicleModel.clone()
+    current_tour = Tour([], v)
+    (remainingVisits, str_tour) = current_tour.buildTour(remainingVisits, depot, distanceMatrix, timeMatrix)
+    result = [current_tour]
+    str_tours = str_tour
+    while len(remainingVisits) > 0:
+        v = vehicleModel.clone()
+        current_tour = Tour([], v)
+        (remainingVisits, str_tour) = current_tour.buildTour(remainingVisits, depot, distanceMatrix, timeMatrix)
+        result.append(current_tour)
+        str_tours += "\n"+str_tour
+    return (result, str_tours)
 
 
 ### TP1 CONSTRUIRE LES TOURS ###
@@ -44,10 +59,9 @@ vroom = Vehicle(
     getStrFromIni("start_time"),
     getStrFromIni("end_time")
 )
-tournoi = Tour(listVisits, vroom)
-the_result = tournoi.buildTours(distances, times)
-for r in the_result:
-    print(r)
+(listTours, the_result) = buildTours(listVisits, vroom, distances, times)
+print(the_result)
+
 
 ### TP2 CONSTRUIRE LES VOISINAGES ###
 def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2Index: int):

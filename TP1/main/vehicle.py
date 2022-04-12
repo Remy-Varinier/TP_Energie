@@ -66,12 +66,14 @@ class Vehicle:
         self.distDone = 0
 
     def recharge(self, rechargeMode=ChargeEnum.FAST):
+        #Note : Pour éviter une exception, on considère que le véhicule peut terminer sa journée
+        #au cours d'un rechargement
         if rechargeMode == ChargeEnum.FAST:
-            self.addTime(self.chargeFast)
+            self.time += self.chargeFast
         elif rechargeMode == ChargeEnum.MEDIUM:
-            self.addTime(self.chargeMedium)
+            self.time += self.chargeMedium
         elif rechargeMode == ChargeEnum.SLOW:
-            self.addTime(self.chargeSlow)
+            self.time += self.chargeSlow
         else:
             raise ValueError("Invalid ChargeEnum")
         self.resetKilometer()
@@ -80,9 +82,9 @@ class Vehicle:
         return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)
 
     def __str__(self):
-        second = self.time%60
-        minute = (self.time//60)%60
-        hour = (self.time//3600)%24
+        second = int(self.time%60)
+        minute = int((self.time//60)%60)
+        hour = int((self.time//3600)%24)
         return "VEHICLE: maxDist=" + str(self.maxDist) \
                + " capacity=" + str(self.capacity) \
                + " chargeFast=" + str(self.chargeFast) \

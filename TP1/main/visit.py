@@ -6,6 +6,9 @@ class Visit:
         self.visitLon = visit_lon #Longitude
         self.demand = demand #Demande en nombre de sacs à livrer
 
+    def clone(self):
+        return Visit(self.visitId, self.visitName, self.visitLat, self.visitLon, self.demand)
+
     def __str__(self):
         return "VISIT: visitId=" + str(self.visitId) \
                + " visitName=" + self.visitName \

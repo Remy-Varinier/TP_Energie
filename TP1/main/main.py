@@ -73,6 +73,7 @@ def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2In
     """
     try:
         listTours[tIndex].swapVisits(v1Index, v2Index)
+        "TODO comment intégrer le contrôle du tour ?"
     except IndexError:
         "Voisinage impossible"
 

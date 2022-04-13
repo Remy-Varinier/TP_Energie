@@ -25,6 +25,28 @@ class Tour:
             j += 1
         return kilometer
 
+    def isAValidTour(self, vehicleModel: Vehicle, distanceMatrix, timeMatrix) -> bool:
+        try:
+            if len(self.visits) == 0:
+                return True
+            currentVisit = self.visits[0]
+            for futurVisit in self.visits[1:]:
+                dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
+                time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
+                vehicleModel.addKilometer(dist)
+                vehicleModel.addTime(time)
+                if futurVisit.visitName == "C":
+                    vehicleModel.setCapacity(self.vehicle.capacity)
+                elif futurVisit.visitName == "R":
+                    vehicleModel.recharge()
+                else:
+                    vehicleModel.removeCapacity(futurVisit.demand)
+                currentVisit = futurVisit
+
+            return True
+        except (IndexError, ValueError):
+            return False
+
     def swapVisits(self, i, j):
         temp = self.visits[i]
         self.visits[i] = self.visits[j]

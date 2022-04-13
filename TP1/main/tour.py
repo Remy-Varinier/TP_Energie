@@ -1,3 +1,4 @@
+import random
 import typing
 
 from main.vehicle import Vehicle
@@ -36,7 +37,115 @@ class Tour:
                 res.append(i)
         return res
 
-    def buildTour(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
+    def buildTour(self, mode: str, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
+        -> typing.Tuple[typing.List[Visit], str]:
+        if mode == "Naif":
+            return self.buildTourNaif(remainingVisits, depot, distanceMatrix, timeMatrix)
+        elif mode == "Random":
+            return self.buildTourRandom(remainingVisits, depot, distanceMatrix, timeMatrix)
+        elif mode == "Optimal":
+            return self.buildTourOptimal(remainingVisits, depot, distanceMatrix, timeMatrix)
+        else:
+            raise ValueError("Unknown mode for buildTour")
+
+    def buildTourNaif(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
+        -> typing.Tuple[typing.List[Visit], str]:
+        currentVisit = depot
+        notFull = True
+        str_tour = str(currentVisit.visitId)
+        self.vehicle.setCapacity(self.vehicle.capacity)
+        while (len(remainingVisits) > 0 and notFull):
+            futurVisit = remainingVisits[0]
+            dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
+            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
+
+            if not (self.vehicle.canAddTime(time + timeMatrix[futurVisit.visitId][depot.visitId])):
+                #La journée du véhicule est finie
+                notFull = False
+            elif not (self.vehicle.canAddKilometer(dist + distanceMatrix[futurVisit.visitId][depot.visitId])):
+                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
+                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
+                str_tour += ",R"
+                visitToAdd = depot.clone()
+                visitToAdd.visitName = "R"
+                self.visits.append(visitToAdd)
+                self.vehicle.recharge()  #charge FAST
+                currentVisit = depot
+            elif not (self.vehicle.canRemoveCapacity(futurVisit.demand)):
+                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
+                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
+                str_tour += ",C"
+                visitToAdd = depot.clone()
+                visitToAdd.visitName = "C"
+                self.visits.append(visitToAdd)
+                self.vehicle.setCapacity(self.vehicle.capacity)
+                currentVisit = depot
+            else:
+                #On peut effectuer la livraison
+                self.vehicle.addKilometer(dist)
+                self.vehicle.addTime(time)
+                self.vehicle.removeCapacity(futurVisit.demand)
+                str_tour += "," + str(futurVisit.visitId)
+                currentVisit = futurVisit
+                remainingVisits.pop(0)
+                self.visits.append(futurVisit)
+                if len(remainingVisits) == 0:
+                    notFull = False
+
+        return (remainingVisits, str_tour)
+
+
+    def buildTourRandom(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
+        -> typing.Tuple[typing.List[Visit], str]:
+        currentVisit = depot
+        notFull = True
+        str_tour = str(currentVisit.visitId)
+        self.vehicle.setCapacity(self.vehicle.capacity)
+        while (len(remainingVisits) > 0 and notFull):
+            futurVisit = remainingVisits[random.randint(0, len(remainingVisits)-1)]
+            dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
+            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
+
+            if not (self.vehicle.canAddTime(time + timeMatrix[futurVisit.visitId][depot.visitId])):
+                #La journée du véhicule est finie
+                notFull = False
+            elif not (self.vehicle.canAddKilometer(dist + distanceMatrix[futurVisit.visitId][depot.visitId])):
+                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
+                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
+                str_tour += ",R"
+                visitToAdd = depot.clone()
+                visitToAdd.visitName = "R"
+                self.visits.append(visitToAdd)
+                self.vehicle.recharge()  #charge FAST
+                currentVisit = depot
+            elif not (self.vehicle.canRemoveCapacity(futurVisit.demand)):
+                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
+                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
+                str_tour += ",C"
+                visitToAdd = depot.clone()
+                visitToAdd.visitName = "C"
+                self.visits.append(visitToAdd)
+                self.vehicle.setCapacity(self.vehicle.capacity)
+                currentVisit = depot
+            else:
+                #On peut effectuer la livraison
+                self.vehicle.addKilometer(dist)
+                self.vehicle.addTime(time)
+                self.vehicle.removeCapacity(futurVisit.demand)
+                str_tour += "," + str(futurVisit.visitId)
+                currentVisit = futurVisit
+                remainingVisits.remove(futurVisit)
+                self.visits.append(futurVisit)
+                if len(remainingVisits) == 0:
+                    notFull = False
+
+        return (remainingVisits, str_tour)
+
+    def buildTourOptimal(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
         -> typing.Tuple[typing.List[Visit], str]:
         currentVisit = depot
         notFull = True

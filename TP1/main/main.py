@@ -32,18 +32,18 @@ def getIntFromIni(value: str):
 def getStrFromIni(value: str):
     return config.get("Vehicle", value)
 
-def buildTours(remainingVisits: typing.List[Visit], vehicleModel: Vehicle, distanceMatrix, timeMatrix)\
-        -> typing.Tuple[typing.List[Tour], str]:
+def buildTours(remainingVisits: typing.List[Visit], vehicleModel: Vehicle, distanceMatrix, timeMatrix,
+               mode: str="Optimal") -> typing.Tuple[typing.List[Tour], str]:
     depot = remainingVisits.pop(0)
     v = vehicleModel.clone()
     current_tour = Tour([], v)
-    (remainingVisits, str_tour) = current_tour.buildTour(remainingVisits, depot, distanceMatrix, timeMatrix)
+    (remainingVisits, str_tour) = current_tour.buildTour(mode, remainingVisits, depot, distanceMatrix, timeMatrix)
     result = [current_tour]
     str_tours = str_tour
     while len(remainingVisits) > 0:
         v = vehicleModel.clone()
         current_tour = Tour([], v)
-        (remainingVisits, str_tour) = current_tour.buildTour(remainingVisits, depot, distanceMatrix, timeMatrix)
+        (remainingVisits, str_tour) = current_tour.buildTour(mode, remainingVisits, depot, distanceMatrix, timeMatrix)
         result.append(current_tour)
         str_tours += "\n"+str_tour
     return (result, str_tours)
@@ -59,7 +59,7 @@ vroom = Vehicle(
     getStrFromIni("start_time"),
     getStrFromIni("end_time")
 )
-(listTours, the_result) = buildTours(listVisits, vroom, distances, times)
+(listTours, the_result) = buildTours(listVisits, vroom, distances, times, mode="Random")
 print(the_result)
 
 

@@ -66,8 +66,15 @@ class Vehicle:
         self.distDone = 0
 
     def recharge(self, rechargeMode=ChargeEnum.FAST):
-        #Note : Pour éviter une exception, on considère que le véhicule peut terminer sa journée
-        #au cours d'un rechargement
+        """
+        Recharger le véhicule selon le mode spécifié (par défaut FAST).
+        Cela réinitialise son compteur kilométrique et ajoute le temps de charge.
+        Note : Pour éviter une exception, on considère que le véhicule peut terminer sa journée
+        au cours d'un rechargement, il n'y a donc pas de contrôle du temps ajouté.
+
+        :param rechargeMode:
+        :raises ValueError : Le mode spécifié est inconnu
+        """
         if rechargeMode == ChargeEnum.FAST:
             self.time += self.chargeFast
         elif rechargeMode == ChargeEnum.MEDIUM:

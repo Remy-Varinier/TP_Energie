@@ -34,6 +34,16 @@ def getStrFromIni(value: str):
 
 def buildTours(remainingVisits: typing.List[Visit], vehicleModel: Vehicle, distanceMatrix, timeMatrix,
                mode: str="Optimal") -> typing.Tuple[typing.List[Tour], str]:
+    """
+    Construit la liste de tours ainsi que la chaîne de caractères affichable.
+
+    :param remainingVisits: liste de visites à effectuer
+    :param vehicleModel: modèle du Vehicle
+    :param distanceMatrix: matrice des distances
+    :param timeMatrix: matrice des temps
+    :param mode: "Optimal" | "Naif" | "Random" (par défaut Optimal)
+    :return: Tuple(liste des tours, chaîne de caractères)
+    """
     depot = remainingVisits.pop(0)
     v = vehicleModel.clone()
     current_tour = Tour([], v)

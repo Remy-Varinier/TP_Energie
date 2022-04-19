@@ -152,3 +152,5 @@ def findVoisinage4(listTours: typing.List[Tour], tIndex: int, crIndex: int=0, sh
     except IndexError:
         return False
 
+print(repr(listTours))
+findVoisinage1(listTours, 0, 3, 4)

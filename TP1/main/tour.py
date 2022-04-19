@@ -275,9 +275,10 @@ class Tour:
 
         return (remainingVisits, str_tour)
 
-    def __str__(self):
-        return "TOUR: visits=" + str(self.visits) \
-               + " vehicle=" + str(self.vehicle)
+    def __repr__(self):
+        return "TOUR: visits=" + repr(self.visits) \
+               + "\n vehicle=" + repr(self.vehicle) \
+               + "\n"
 
 
 def findNearestVisit(listVisit: typing.List[Visit], fromVisit: Visit, distanceMatrix) -> Visit:

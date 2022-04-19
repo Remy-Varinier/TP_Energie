@@ -88,7 +88,7 @@ class Vehicle:
     def clone(self):
         return Vehicle(self.maxDist, self.capacity, self.chargeFast, self.chargeMedium, self.chargeSlow, self.startTime, self.endTime)
 
-    def __str__(self):
+    def __repr__(self):
         second = int(self.time%60)
         minute = int((self.time//60)%60)
         hour = int((self.time//3600)%24)
@@ -101,4 +101,5 @@ class Vehicle:
                + " endTime=" + self.endTime \
                + " distDone=" + str(self.distDone) \
                + " currentCapacity=" + str(self.currentCapacity) \
-               + " currentTime=" + str(hour) + ":" + str(minute) + ":" + str(second)
+               + " currentTime=" + str(hour) + ":" + str(minute) + ":" + str(second)\
+               + "\n"

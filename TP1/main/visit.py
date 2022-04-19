@@ -9,9 +9,10 @@ class Visit:
     def clone(self):
         return Visit(self.visitId, self.visitName, self.visitLat, self.visitLon, self.demand)
 
-    def __str__(self):
+    def __repr__(self):
         return "VISIT: visitId=" + str(self.visitId) \
                + " visitName=" + self.visitName \
                + " visitLat=" + str(self.visitLat) \
                + " visit_lon=" + str(self.visitLon) \
-               + " demand=" + str(self.demand)
+               + " demand=" + str(self.demand) \
+               + "\n"

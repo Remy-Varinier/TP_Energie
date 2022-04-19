@@ -64,21 +64,24 @@ print(the_result)
 
 
 ### TP2 CONSTRUIRE LES VOISINAGES ###
-def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2Index: int):
+def findVoisinage1(listTours: typing.List[Tour], tIndex: int, v1Index: int, v2Index: int) -> bool:
     """Echanger deux visites dans un tour.
 
     :param listTours: liste des Tour
     :param tIndex: l'index du Tour à modifier
     :param v1Index, v2Index: index des visites à échanger
     """
+    global vroom
+    global distances
+    global times
     try:
         listTours[tIndex].swapVisits(v1Index, v2Index)
-        "TODO comment intégrer le contrôle du tour ?"
+        return listTours[tIndex].isAValidTour(vroom, distances, times)
     except IndexError:
-        "Voisinage impossible"
+        return False
 
 
-def findVoisinage2(listTours: typing.List[Tour], t1Index: int, t2Index: int, v1Index: int, v2Index: int):
+def findVoisinage2(listTours: typing.List[Tour], t1Index: int, t2Index: int, v1Index: int, v2Index: int) -> bool:
     """A partir de deux tours T1 et T2 sélectionnés dans une liste de tours,
     retirer une visite de T1 et l'ajouter sur T2.
 
@@ -86,14 +89,19 @@ def findVoisinage2(listTours: typing.List[Tour], t1Index: int, t2Index: int, v1I
     :param t1Index, t2Index: index des Tour à modifier
     :param v1Index, v2Index: index de départ sur T1 et d'arrivée sur T2
     """
+    global vroom
+    global distances
+    global times
     try:
         item = listTours[t1Index].visits.pop(v1Index)
         listTours[t2Index].visits.insert(v2Index, item)
+        #Retirer un tour sur t1Index le rend toujours valide
+        return listTours[t2Index].isAValidTour(vroom, distances, times)
     except IndexError:
-        "Voisinage impossible"
+        return False
 
 
-def findVoisinage3(listTours: typing.List[Tour], t1Index: int, t2Index: int):
+def findVoisinage3(listTours: typing.List[Tour], t1Index: int, t2Index: int) -> bool:
     """A partir de deux tours T1 et T2 sélectionnés dans une liste de tours,
     prendre le dernier morceau de T1 (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur la fin de T2.
 
@@ -101,16 +109,21 @@ def findVoisinage3(listTours: typing.List[Tour], t1Index: int, t2Index: int):
     :param t1Index: index du Tour à modifier
     :param t2Index:
     """
+    global vroom
+    global distances
+    global times
     try:
         itemIndex = listTours[t1Index].findCorRVisits()[-1]
         listEnd = listTours[t1Index].visits[itemIndex:]
         del listTours[t1Index].visits[itemIndex:]
         listTours[t2Index].visits.extend(listEnd)
+        #Retirer un tour sur t1Index le rend toujours valide
+        return listTours[t2Index].isAValidTour(vroom, distances, times)
     except IndexError:
-        "Voisinage impossible"
+        return False
 
 
-def findVoisinage4(listTours: typing.List[Tour], tIndex: int, crIndex: int=0, shift: int=1):
+def findVoisinage4(listTours: typing.List[Tour], tIndex: int, crIndex: int=0, shift: int=1) -> bool:
     """Déplacer une étape 'C' ou 'R' dans un tour.
 
     :param listTours: liste des Tour
@@ -118,10 +131,14 @@ def findVoisinage4(listTours: typing.List[Tour], tIndex: int, crIndex: int=0, sh
     :param crIndex: l'index de l'étape 'C' ou 'R' à retenir
     :param shift: déplacement de l'élement à effectuer (par défaut 1 élement après).
     """
+    global vroom
+    global distances
+    global times
     try:
         itemIndex = listTours[tIndex].findCorRVisits()[crIndex]
         item = listTours[tIndex].visits.pop(itemIndex)
         listTours[tIndex].visits.insert(itemIndex + shift, item)
+        return listTours[tIndex].isAValidTour(vroom, distances, times)
     except IndexError:
-        "Voisinage impossible"
+        return False
 

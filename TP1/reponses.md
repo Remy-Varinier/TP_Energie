@@ -61,18 +61,13 @@ Exemples d'instances :
 
 ### 1) Proposer une méthode déterministe pour construire une solution qui passe par le dépôt autant de fois que nécessaire pour respecter toutes les contraintes. Cette méthode doit être polynomiale
 
-    Pour chaque camion :
-      Tant que nb(lieux_non_livres) != 0:
-        Rechercher le lieu non livré le plus proche;
-        Si (distance > (max_dist - currentKilometer)):
-          Recharger le véhicule;
-        Si (demande > currentCapacity):
-          Aller au dépôt; 
-        Sinon :
-          Sélectionner le lieu;
-          lieux_non_livres -= 1;
-
-
+  Il faut que l'algorithme soit déterministe : il ne doit pas avoir de variables aléatoires.
+  Il faut que l'algorithme respecte toutes les contraintes :
+    - Un camion doit pouvoir faire toute les livraisons sans tomber en panne
+    - Un camion doit livrer un client en une seule fois
+    - Les camions doit respecter l'heure de départ et d'arrivée
+  Voir le code pour plus de détails. Notament, la fonction `buildTours` défini dans `main.py`.
+  
 #### a. Indiquer la complexité de la méthode.
 
 Pour chaque lieu -> O(n)\

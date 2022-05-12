@@ -1,8 +1,8 @@
 import random
 import typing
 
-from main.vehicle import Vehicle
-from main.visit import Visit
+from vehicle import Vehicle
+from visit import Visit
 
 
 class Tour:
@@ -92,8 +92,8 @@ class Tour:
             return self.buildTourNaif(remainingVisits, depot, distanceMatrix, timeMatrix)
         elif mode == "Random":
             return self.buildTourRandom(remainingVisits, depot, distanceMatrix, timeMatrix)
-        elif mode == "Optimal":
-            return self.buildTourOptimal(remainingVisits, depot, distanceMatrix, timeMatrix)
+        elif mode == "Glouton":
+            return self.buildTourGlouton(remainingVisits, depot, distanceMatrix, timeMatrix)
         else:
             raise ValueError("Unknown mode for buildTour")
 
@@ -213,10 +213,10 @@ class Tour:
 
         return (remainingVisits, str_tour)
 
-    def buildTourOptimal(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
+    def buildTourGlouton(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
         -> typing.Tuple[typing.List[Visit], str]:
         """
-        Construit un Tour en mode Optimal : Recherche la visite la plus proche dans la liste à chaque fois.
+        Construit un Tour en mode Glouton : Recherche la visite la plus proche dans la liste à chaque fois.
 
         :param remainingVisits:
         :param depot:

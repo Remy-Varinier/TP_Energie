@@ -1,7 +1,4 @@
-from cgitb import reset
 from enum import Enum
-from posixpath import split
-import typing
 
 class ChargeEnum(Enum):
     FAST = 1
@@ -26,7 +23,7 @@ class Vehicle:
 
     def addCapacity(self, charge):
         if not(self.canAddCapacity(charge)):
-            raise ValueError("Too much capacity to add for this vehicle : "+str(self))
+            raise ValueError("Too much capacity to add for this vehicle : "+repr(self))
         self.currentCapacity += charge
 
     def canAddCapacity(self, charge) -> bool:
@@ -34,7 +31,7 @@ class Vehicle:
 
     def removeCapacity(self, charge):
         if not(self.canRemoveCapacity(charge)):
-            raise ValueError("Too much capacity to remove for this vehicle : "+str(self))
+            raise ValueError("Too much capacity to remove for this vehicle : "+repr(self))
         self.currentCapacity -= charge
 
     def canRemoveCapacity(self, charge) -> bool:
@@ -42,12 +39,12 @@ class Vehicle:
 
     def setCapacity(self, charge):
         if not(charge >= 0 or charge <= self.capacity):
-            raise ValueError("Incorrect capacity set for this vehicle : "+str(self))
+            raise ValueError("Incorrect capacity set for this vehicle : "+repr(self))
         self.currentCapacity = charge
 
     def addKilometer(self, kilometre):
         if not(self.canAddKilometer(kilometre)):
-            raise ValueError("Too many kilometers to add for this vehicle : "+str(self))
+            raise ValueError("Too many kilometers to add for this vehicle : "+repr(self))
         self.distDone += kilometre
 
     def canAddKilometer(self, kilometre) -> bool:
@@ -55,7 +52,7 @@ class Vehicle:
 
     def addTime(self, time):
         if not(self.canAddTime(time)):
-            raise ValueError("Too much time to add for this vehicle : "+str(self))
+            raise ValueError("Too much time to add for this vehicle : "+repr(self))
         self.time += time
 
     def canAddTime(self, timeAdded: int) -> bool:

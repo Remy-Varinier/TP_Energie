@@ -4,11 +4,14 @@ import typing
 from vehicle import Vehicle
 from visit import Visit
 
+#TODO méthodes removeFromVisits(), et changer swapVisits() pour rejouer le Tour avec replayTour()
+#TODO comment gérer les exceptions renvoyés par replayTour() ??
 
 class Tour:
     def __init__(self, visits: typing.List[Visit], vehicle: Vehicle):
         self.visits = visits
         self.vehicle = vehicle
+        self.str_tour = ""
 
     def calcKilometre(self, distance) -> int:
         i = 0
@@ -25,6 +28,73 @@ class Tour:
             j += 1
         return kilometer
 
+
+    def addToVisits(self, new_visit: Visit, distanceMatrix, timeMatrix) -> bool: #returns True if visit could be added
+
+        depot = self.visits[0]
+        current_visit = self.visits[-1]
+        dist = distanceMatrix[current_visit.visitId][new_visit.visitId]
+        time = timeMatrix[current_visit.visitId][new_visit.visitId]
+
+        while True:
+            #Tant que l'on n'a pas effectué la livraison, continuer
+            if not (self.vehicle.canAddTime(time + timeMatrix[new_visit.visitId][depot.visitId])):
+                #La journée du véhicule est finie, impossible d'effectuer la livraison
+                return False
+            elif not (self.vehicle.canAddKilometer(dist + distanceMatrix[new_visit.visitId][depot.visitId])):
+                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
+                self.vehicle.addKilometer(distanceMatrix[current_visit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[current_visit.visitId][depot.visitId])
+                self.str_tour += ",R"
+                self.visits.append(depot.clone())
+                self.vehicle.recharge()  #charge FAST
+                current_visit = depot
+            elif not (self.vehicle.canRemoveCapacity(new_visit.demand)):
+                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
+                self.vehicle.addKilometer(distanceMatrix[current_visit.visitId][depot.visitId])
+                self.vehicle.addTime(timeMatrix[current_visit.visitId][depot.visitId])
+                self.str_tour += ",C"
+                self.visits.append(depot.clone())
+                self.vehicle.setCapacity(self.vehicle.capacity)
+                current_visit = depot
+            else:
+                #On peut effectuer la livraison
+                self.vehicle.addKilometer(dist)
+                self.vehicle.addTime(time)
+                self.vehicle.removeCapacity(new_visit.demand)
+                self.str_tour += "," + str(new_visit.visitId)
+                current_visit = new_visit
+                self.visits.append(new_visit)
+                return True
+            dist = distanceMatrix[current_visit.visitId][new_visit.visitId]
+            time = timeMatrix[current_visit.visitId][new_visit.visitId]
+
+    def replayTour(self, vehicleModel: Vehicle, distanceMatrix, timeMatrix):
+        """
+        Fonction pour rejouer l'ensemble des tours de cet objet Tour tout en réinitialisant son véhicule.
+        ATTENTION peut lever IndexError ou ValueError si la liste des visites n'est pas valide par exemple !
+
+        :param vehicleModel:
+        :param distanceMatrix:
+        :param timeMatrix:
+        :return:
+        """
+        self.vehicle = vehicleModel #Reset vehicle
+        currentVisit = self.visits[0]
+        for futurVisit in self.visits[1:]:
+            dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
+            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
+            self.vehicle.addKilometer(dist)
+            self.vehicle.addTime(time)
+            if futurVisit.visitName == "C":
+                self.vehicle.setCapacity(self.vehicle.capacity)
+            elif futurVisit.visitName == "R":
+                self.vehicle.recharge()
+            else:
+                self.vehicle.removeCapacity(futurVisit.demand)
+            currentVisit = futurVisit
+
+
     def isAValidTour(self, vehicleModel: Vehicle, distanceMatrix, timeMatrix) -> bool:
         """
         Fonction de contrôle d'un Tour valide.
@@ -38,20 +108,7 @@ class Tour:
         try:
             if len(self.visits) == 0:
                 return True
-            currentVisit = self.visits[0]
-            for futurVisit in self.visits[1:]:
-                dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
-                time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
-                vehicleModel.addKilometer(dist)
-                vehicleModel.addTime(time)
-                if futurVisit.visitName == "C":
-                    vehicleModel.setCapacity(self.vehicle.capacity)
-                elif futurVisit.visitName == "R":
-                    vehicleModel.recharge()
-                else:
-                    vehicleModel.removeCapacity(futurVisit.demand)
-                currentVisit = futurVisit
-
+            self.replayTour(vehicleModel, distanceMatrix, timeMatrix)
             return True
         except (IndexError, ValueError):
             return False
@@ -82,7 +139,7 @@ class Tour:
         return res
 
     def buildTour(self, mode: str, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
-        -> typing.Tuple[typing.List[Visit], str]:
+        -> typing.List[Visit]:
         """
         Fonction pour choisir le mode de construction d'un Tour.
 
@@ -98,7 +155,7 @@ class Tour:
             raise ValueError("Unknown mode for buildTour")
 
     def buildTourNaif(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
-        -> typing.Tuple[typing.List[Visit], str]:
+        -> typing.List[Visit]:
         """
         Construire un Tour en mode Naïf : On prend simplement la liste de visites dans l'ordre.
 
@@ -108,55 +165,23 @@ class Tour:
         :param timeMatrix:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        currentVisit = depot
-        notFull = True
-        str_tour = str(currentVisit.visitId)
+        self.visits.append(depot)
+        self.str_tour = str(depot.visitId)
         self.vehicle.setCapacity(self.vehicle.capacity)
-        while (len(remainingVisits) > 0 and notFull):
+        while len(remainingVisits) > 0:
             futurVisit = remainingVisits[0]
-            dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
-            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
 
-            if not (self.vehicle.canAddTime(time + timeMatrix[futurVisit.visitId][depot.visitId])):
-                #La journée du véhicule est finie
-                notFull = False
-            elif not (self.vehicle.canAddKilometer(dist + distanceMatrix[futurVisit.visitId][depot.visitId])):
-                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",R"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "R"
-                self.visits.append(visitToAdd)
-                self.vehicle.recharge()  #charge FAST
-                currentVisit = depot
-            elif not (self.vehicle.canRemoveCapacity(futurVisit.demand)):
-                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",C"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "C"
-                self.visits.append(visitToAdd)
-                self.vehicle.setCapacity(self.vehicle.capacity)
-                currentVisit = depot
-            else:
-                #On peut effectuer la livraison
-                self.vehicle.addKilometer(dist)
-                self.vehicle.addTime(time)
-                self.vehicle.removeCapacity(futurVisit.demand)
-                str_tour += "," + str(futurVisit.visitId)
-                currentVisit = futurVisit
-                remainingVisits.pop(0)
-                self.visits.append(futurVisit)
-                if len(remainingVisits) == 0:
-                    notFull = False
+            visit_added = self.addToVisits(futurVisit, distanceMatrix, timeMatrix)
+            if not(visit_added):
+                #Cannot build the Tour further
+                break
+            remainingVisits.remove(futurVisit)
 
-        return (remainingVisits, str_tour)
+        return remainingVisits
 
 
     def buildTourRandom(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
-        -> typing.Tuple[typing.List[Visit], str]:
+        -> typing.List[Visit]:
         """
         Construire un Tour en mode Random : Sélectionne une visite aléatoire dans la liste à chaque fois.
         Cette méthode est NON-DETERMINISTE !
@@ -167,54 +192,22 @@ class Tour:
         :param timeMatrix:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        currentVisit = depot
-        notFull = True
-        str_tour = str(currentVisit.visitId)
+        self.visits.append(depot)
+        self.str_tour = str(depot.visitId)
         self.vehicle.setCapacity(self.vehicle.capacity)
-        while (len(remainingVisits) > 0 and notFull):
+        while (len(remainingVisits) > 0):
             futurVisit = remainingVisits[random.randint(0, len(remainingVisits)-1)]
-            dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
-            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
 
-            if not (self.vehicle.canAddTime(time + timeMatrix[futurVisit.visitId][depot.visitId])):
-                #La journée du véhicule est finie
-                notFull = False
-            elif not (self.vehicle.canAddKilometer(dist + distanceMatrix[futurVisit.visitId][depot.visitId])):
-                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",R"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "R"
-                self.visits.append(visitToAdd)
-                self.vehicle.recharge()  #charge FAST
-                currentVisit = depot
-            elif not (self.vehicle.canRemoveCapacity(futurVisit.demand)):
-                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",C"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "C"
-                self.visits.append(visitToAdd)
-                self.vehicle.setCapacity(self.vehicle.capacity)
-                currentVisit = depot
-            else:
-                #On peut effectuer la livraison
-                self.vehicle.addKilometer(dist)
-                self.vehicle.addTime(time)
-                self.vehicle.removeCapacity(futurVisit.demand)
-                str_tour += "," + str(futurVisit.visitId)
-                currentVisit = futurVisit
-                remainingVisits.remove(futurVisit)
-                self.visits.append(futurVisit)
-                if len(remainingVisits) == 0:
-                    notFull = False
+            visit_added = self.addToVisits(futurVisit, distanceMatrix, timeMatrix)
+            if not(visit_added):
+                #Cannot build the Tour further
+                break
+            remainingVisits.remove(futurVisit)
 
-        return (remainingVisits, str_tour)
+        return remainingVisits
 
     def buildTourGlouton(self, remainingVisits: typing.List[Visit], depot: Visit, distanceMatrix, timeMatrix)\
-        -> typing.Tuple[typing.List[Visit], str]:
+        -> typing.List[Visit]:
         """
         Construit un Tour en mode Glouton : Recherche la visite la plus proche dans la liste à chaque fois.
 
@@ -224,56 +217,22 @@ class Tour:
         :param timeMatrix:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        currentVisit = depot
-        notFull = True
-        str_tour = str(currentVisit.visitId)
+        self.visits.append(depot)
+        self.str_tour = str(depot.visitId)
         self.vehicle.setCapacity(self.vehicle.capacity)
-        while notFull:
-            try:
-                futurVisit = findNearestVisit(remainingVisits, currentVisit, distanceMatrix)
-                ### TODO Pour plus tard : nearestDepot = findNearestDepot(currentVisit, distanceMatrix)
-            except IndexError:
-                break  #La liste de visites restantes est vide, on a fini
+        currentVisit = depot
+        while (len(remainingVisits) > 0):
+            futurVisit = findNearestVisit(remainingVisits, currentVisit, distanceMatrix)
+            ### TODO Pour plus tard : nearestDepot = findNearestDepot(currentVisit, distanceMatrix)
 
-            distMin = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
-            time = timeMatrix[currentVisit.visitId][futurVisit.visitId]
+            visit_added = self.addToVisits(futurVisit, distanceMatrix, timeMatrix)
+            if not (visit_added):
+                #Cannot build the Tour further
+                break
+            remainingVisits.remove(futurVisit)
+            currentVisit = futurVisit
 
-            if not (self.vehicle.canAddTime(time + timeMatrix[futurVisit.visitId][depot.visitId])):
-                #La journée du véhicule est finie
-                notFull = False
-            elif not (self.vehicle.canAddKilometer(distMin + distanceMatrix[futurVisit.visitId][depot.visitId])):
-                #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",R"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "R"
-                self.visits.append(visitToAdd)
-                self.vehicle.recharge()  #charge FAST
-                currentVisit = depot
-            elif not (self.vehicle.canRemoveCapacity(futurVisit.demand)):
-                #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
-                self.vehicle.addKilometer(distanceMatrix[currentVisit.visitId][depot.visitId])
-                self.vehicle.addTime(timeMatrix[currentVisit.visitId][depot.visitId])
-                str_tour += ",C"
-                visitToAdd = depot.clone()
-                visitToAdd.visitName = "C"
-                self.visits.append(visitToAdd)
-                self.vehicle.setCapacity(self.vehicle.capacity)
-                currentVisit = depot
-            else:
-                #On peut effectuer la livraison
-                self.vehicle.addKilometer(distMin)
-                self.vehicle.addTime(time)
-                self.vehicle.removeCapacity(futurVisit.demand)
-                str_tour += "," + str(futurVisit.visitId)
-                currentVisit = futurVisit
-                remainingVisits.remove(futurVisit)
-                self.visits.append(futurVisit)
-                if len(remainingVisits) == 0:
-                    notFull = False
-
-        return (remainingVisits, str_tour)
+        return remainingVisits
 
     def __repr__(self):
         return "TOUR: visits=" + repr(self.visits) \

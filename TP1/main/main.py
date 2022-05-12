@@ -21,15 +21,15 @@ def buildTours(global_vars: Globals, mode: str="Glouton") -> typing.Tuple[typing
     depot = global_vars.listVisits.pop(0)
     v = global_vars.vehicleModel.clone()
     current_tour = Tour([], v)
-    (remainingVisits, str_tour) = current_tour.buildTour(mode, global_vars.listVisits, depot, global_vars.distances, global_vars.times)
+    remainingVisits = current_tour.buildTour(mode, global_vars.listVisits, depot, global_vars.distances, global_vars.times)
     result = [current_tour]
-    str_tours = str_tour
+    str_tours = current_tour.str_tour
     while len(remainingVisits) > 0:
         v = global_vars.vehicleModel.clone()
         current_tour = Tour([], v)
-        (remainingVisits, str_tour) = current_tour.buildTour(mode, global_vars.listVisits, depot, global_vars.distances, global_vars.times)
+        remainingVisits = current_tour.buildTour(mode, global_vars.listVisits, depot, global_vars.distances, global_vars.times)
         result.append(current_tour)
-        str_tours += "\n"+str_tour
+        str_tours += "\n"+current_tour.str_tour
     return (result, str_tours)
 
 

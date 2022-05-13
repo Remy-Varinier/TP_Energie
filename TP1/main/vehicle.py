@@ -8,17 +8,17 @@ class ChargeEnum(Enum):
 
 class Vehicle:
     def __init__(self, max_dist: int, capacity: int, charge_fast: int, charge_medium: int, charge_slow: int, start_time: str, end_time: str):
-        self.maxDistance = max_dist
-        self.maxCapacity = capacity
-        self.chargeFast = charge_fast
-        self.chargeMedium = charge_medium
-        self.chargeSlow = charge_slow
-        self.startTime = start_time
-        self.endTime = end_time
-        self.currentDistance = 0
-        self.currentCapacity = 0
+        self.maxDistance = max_dist #Distance maximale entre deux recharges, en kilomètres
+        self.maxCapacity = capacity #Capacité maximale en nombre de sacs
+        self.chargeFast = charge_fast #Temps de charge rapide, en minutes
+        self.chargeMedium = charge_medium #Temps de charge moyenne, en minutes
+        self.chargeSlow = charge_slow #Temps de charge lente, en minutes
+        self.startTime = start_time #Heure de début, hh:mm
+        self.endTime = end_time #Heure de fin, hh:mm
+        self.currentDistance = 0 #Distance parcourue par le véhicule depuis sa dernière recharge, en kilomètres
+        self.currentCapacity = self.maxCapacity #Capacité actuelle du véhicule en nombre de sacs
         startTimeSplit = self.startTime.split(":")
-        self.currentTime = int(startTimeSplit[0]) * 3600 + int(startTimeSplit[1]) * 60 #Moment de la journée en SECONDES
+        self.currentTime = int(startTimeSplit[0]) * 3600 + int(startTimeSplit[1]) * 60 #Moment de la journée en SECONDES (correspond à hh:mm:ss)
 
     #Utility functions for capacity
     def addCapacity(self, charge):

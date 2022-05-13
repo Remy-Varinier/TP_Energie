@@ -7,7 +7,7 @@ from tour import Tour
 
 # VARIABLES DE CONFIGURATION (si on appelle le module sans argument fourni)
 FOLDER = "../Data/lyon_150_1_1/"
-MODE = "Random"
+MODE = "Glouton"
 
 #remainingVisits: typing.List[Visit], vehicleModel: Vehicle, distanceMatrix, timeMatrix,
 def buildTours(global_vars: Globals, mode: str="Glouton") -> typing.Tuple[typing.List[Tour], str]:
@@ -44,7 +44,7 @@ def doVoisinage1(global_vars: Globals, listTours: typing.List[Tour], tIndex: int
     """
     try:
         listTours[tIndex].swapVisits(v1Index, v2Index)
-        return listTours[tIndex].isAValidTour(global_vars.vehicleModel, global_vars.distances, global_vars.times)
+        return listTours[tIndex].isAValidTour(global_vars.distances, global_vars.times)
     except IndexError:
         return False
 
@@ -62,7 +62,7 @@ def doVoisinage2(global_vars: Globals, listTours: typing.List[Tour], t1Index: in
         item = listTours[t1Index].visits.pop(v1Index)
         listTours[t2Index].visits.insert(v2Index, item)
         #Retirer un tour sur t1Index le rend toujours valide
-        return listTours[t2Index].isAValidTour(global_vars.vehicleModel, global_vars.distances, global_vars.times)
+        return listTours[t2Index].isAValidTour(global_vars.distances, global_vars.times)
     except IndexError:
         return False
 
@@ -82,7 +82,7 @@ def doVoisinage3(global_vars: Globals, listTours: typing.List[Tour], t1Index: in
         del listTours[t1Index].visits[itemIndex:]
         listTours[t2Index].visits.extend(listEnd)
         #Retirer un tour sur t1Index le rend toujours valide
-        return listTours[t2Index].isAValidTour(global_vars.vehicleModel, global_vars.distances, global_vars.times)
+        return listTours[t2Index].isAValidTour(global_vars.distances, global_vars.times)
     except IndexError:
         return False
 
@@ -100,7 +100,7 @@ def doVoisinage4(global_vars: Globals, listTours: typing.List[Tour], tIndex: int
         itemIndex = listTours[tIndex].findCorRVisits()[crIndex]
         item = listTours[tIndex].visits.pop(itemIndex)
         listTours[tIndex].visits.insert(itemIndex + shift, item)
-        return listTours[tIndex].isAValidTour(global_vars.vehicleModel, global_vars.distances, global_vars.times)
+        return listTours[tIndex].isAValidTour(global_vars.distances, global_vars.times)
     except IndexError:
         return False
 

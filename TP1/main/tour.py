@@ -4,14 +4,13 @@ import typing
 from vehicle import Vehicle
 from visit import Visit
 
-#TODO méthodes removeFromVisits(), et changer swapVisits() pour rejouer le Tour avec replayTour()
 #TODO comment gérer les exceptions renvoyés par replayTour() ??
 
 class Tour:
     def __init__(self, visits: typing.List[Visit], vehicle: Vehicle):
-        self.visits = visits
-        self.vehicle = vehicle
-        self.str_tour = ""
+        self.visits = visits #Liste des objets Visit contenus dans ce tour
+        self.vehicle = vehicle #Véhicule parcourant ce tour
+        self.str_tour = "" #Représentation du tour en chaîne de caractères affichable
 
     def calcKilometre(self, distance) -> int:
         i = 0
@@ -29,9 +28,10 @@ class Tour:
         return kilometer
 
 
-    def addToVisits(self, new_visit: Visit, distanceMatrix, timeMatrix) -> bool: #returns True if visit could be added
+    def addToVisits(self, new_visit: Visit, distanceMatrix, timeMatrix, depot=None) -> bool: #returns True if visit could be added
 
-        depot = self.visits[0]
+        if depot is None:
+            depot = self.visits[0]
         current_visit = self.visits[-1]
         dist = distanceMatrix[current_visit.visitId][new_visit.visitId]
         time = timeMatrix[current_visit.visitId][new_visit.visitId]
@@ -47,6 +47,7 @@ class Tour:
                 self.vehicle.addTime(timeMatrix[current_visit.visitId][depot.visitId])
                 self.str_tour += ",R"
                 self.visits.append(depot.clone())
+                self.visits[-1].visitName = "R"
                 self.vehicle.recharge()  #charge FAST
                 current_visit = depot
             elif not (self.vehicle.canRemoveCapacity(new_visit.demand)):
@@ -55,7 +56,8 @@ class Tour:
                 self.vehicle.addTime(timeMatrix[current_visit.visitId][depot.visitId])
                 self.str_tour += ",C"
                 self.visits.append(depot.clone())
-                self.vehicle.setCapacity(self.vehicle.capacity)
+                self.visits[-1].visitName = "C"
+                self.vehicle.resetCapacity()
                 current_visit = depot
             else:
                 #On peut effectuer la livraison
@@ -69,7 +71,30 @@ class Tour:
             dist = distanceMatrix[current_visit.visitId][new_visit.visitId]
             time = timeMatrix[current_visit.visitId][new_visit.visitId]
 
-    def replayTour(self, vehicleModel: Vehicle, distanceMatrix, timeMatrix):
+    def removeLastVisit(self, distanceMatrix, timeMatrix):
+        if len(self.visits) == 0:
+            raise IndexError("Cannot remove a visit from an empty list")
+        if len(self.visits) == 1:
+            self.visits.pop()
+            self.vehicle.resetVehicle()
+        elif self.visits[-1].visitName == 'C' or self.visits[-1].visitName == 'R':
+            while self.visits[-1].visitName == 'C' or self.visits[-1].visitName == 'R':
+                self.visits.pop()
+            self.visits.pop()
+            #Si l'on trouve des étapes de retour au dépôt ou de rechargement, il faudra rejouer le Tour entier
+            self.replayTour(distanceMatrix, timeMatrix)
+        else:
+            dist = distanceMatrix[self.visits[-1].visitId][self.visits[-2].visitId]
+            time = timeMatrix[self.visits[-1].visitId][self.visits[-2].visitId]
+            self.vehicle.removeKilometer(dist)
+            self.vehicle.removeTime(time)
+            self.vehicle.addCapacity(self.visits[-1].demand)
+            split_str_tour = self.str_tour.split(',')
+            split_str_tour.pop()
+            self.str_tour = ','.join(split_str_tour)
+            self.visits.pop()
+
+    def replayTour(self, distanceMatrix, timeMatrix):
         """
         Fonction pour rejouer l'ensemble des tours de cet objet Tour tout en réinitialisant son véhicule.
         ATTENTION peut lever IndexError ou ValueError si la liste des visites n'est pas valide par exemple !
@@ -79,7 +104,7 @@ class Tour:
         :param timeMatrix:
         :return:
         """
-        self.vehicle = vehicleModel #Reset vehicle
+        self.vehicle.resetVehicle()
         currentVisit = self.visits[0]
         for futurVisit in self.visits[1:]:
             dist = distanceMatrix[currentVisit.visitId][futurVisit.visitId]
@@ -87,15 +112,14 @@ class Tour:
             self.vehicle.addKilometer(dist)
             self.vehicle.addTime(time)
             if futurVisit.visitName == "C":
-                self.vehicle.setCapacity(self.vehicle.capacity)
+                self.vehicle.setCapacity(self.vehicle.currentCapacity)
             elif futurVisit.visitName == "R":
                 self.vehicle.recharge()
             else:
                 self.vehicle.removeCapacity(futurVisit.demand)
             currentVisit = futurVisit
 
-
-    def isAValidTour(self, vehicleModel: Vehicle, distanceMatrix, timeMatrix) -> bool:
+    def isAValidTour(self, distanceMatrix, timeMatrix) -> bool:
         """
         Fonction de contrôle d'un Tour valide.
         Rejoue simplement le trajet et vérifie qu'il n'y a pas d'exceptions levées.
@@ -108,7 +132,7 @@ class Tour:
         try:
             if len(self.visits) == 0:
                 return True
-            self.replayTour(vehicleModel, distanceMatrix, timeMatrix)
+            self.replayTour(distanceMatrix, timeMatrix)
             return True
         except (IndexError, ValueError):
             return False
@@ -116,6 +140,7 @@ class Tour:
     def swapVisits(self, i, j):
         """
         Echange les objets indiqués aux index i et j dans la liste de visites.
+        Cette méthode ne REJOUE PAS le tour entier, ne pas oublier ensuite de le vérifier s'il reste valide !
 
         :param i: index 1
         :param j: index 2
@@ -167,7 +192,7 @@ class Tour:
         """
         self.visits.append(depot)
         self.str_tour = str(depot.visitId)
-        self.vehicle.setCapacity(self.vehicle.capacity)
+        self.vehicle.setCapacity(self.vehicle.currentCapacity)
         while len(remainingVisits) > 0:
             futurVisit = remainingVisits[0]
 
@@ -194,7 +219,7 @@ class Tour:
         """
         self.visits.append(depot)
         self.str_tour = str(depot.visitId)
-        self.vehicle.setCapacity(self.vehicle.capacity)
+        self.vehicle.setCapacity(self.vehicle.currentCapacity)
         while (len(remainingVisits) > 0):
             futurVisit = remainingVisits[random.randint(0, len(remainingVisits)-1)]
 
@@ -219,11 +244,11 @@ class Tour:
         """
         self.visits.append(depot)
         self.str_tour = str(depot.visitId)
-        self.vehicle.setCapacity(self.vehicle.capacity)
+        self.vehicle.setCapacity(self.vehicle.currentCapacity)
         currentVisit = depot
         while (len(remainingVisits) > 0):
             futurVisit = findNearestVisit(remainingVisits, currentVisit, distanceMatrix)
-            ### TODO Pour plus tard : nearestDepot = findNearestDepot(currentVisit, distanceMatrix)
+            ### TODO pour plus tard ? nearestDepot = findNearestDepot(listVisits, currentVisit, distanceMatrix)
 
             visit_added = self.addToVisits(futurVisit, distanceMatrix, timeMatrix)
             if not (visit_added):

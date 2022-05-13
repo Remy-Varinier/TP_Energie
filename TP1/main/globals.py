@@ -26,7 +26,7 @@ class Globals:
         self.times = np.loadtxt(folder + "times.txt")
         self.config.read(folder + "vehicle.ini")
         self.vehicleModel = Vehicle(
-            600,
+            self.getIntFromIni("max_dist"),
             self.getIntFromIni("capacity"),
             self.getIntFromIni("charge_fast"),
             self.getIntFromIni("charge_medium"),

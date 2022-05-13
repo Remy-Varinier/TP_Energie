@@ -1,4 +1,6 @@
 # Livraison avec des véhicules électriques
+Aurélien Bouret - Rémy Varinier
+M2 MIAGE
 
 ## Modélisation
 
@@ -41,7 +43,7 @@ distance (distance entre deux dépôts)
 
 ### 2) Comment représenter une solution (en programmation) ?
 
-TODO voir code
+ Voir le code `buildTourOptimal` du fichier `tour.py`.
 
 ### 3) Comment évaluer une solution réalisable ? Comment évaluer une solution non réalisable ?
 
@@ -49,6 +51,8 @@ La solution est réalisable si et seulement si elle respecte toutes les contrain
 - Le kilométrage des camions soit cohérent durant tout le trajet (entre deux passages au dépôt ou des recharges, la distance totale ne dépasse jamais max_dist)
 - La capacité totale d'un camion n'est jamais dépassé durant tout le trajet.
 
+L'évaluation d'une solution réalisable est donc la somme des kilomètre de chaque tour.
+L'évaluation d'une solution non réalisable est l'évaluation d'une solution réalisable plus une pénalité.
 
 ### 4) Proposer des instances pour lesquelles il n’existe pas de solution réalisable, chacune pour une contrainte différente.
 
@@ -61,33 +65,27 @@ Exemples d'instances :
 
 ### 1) Proposer une méthode déterministe pour construire une solution qui passe par le dépôt autant de fois que nécessaire pour respecter toutes les contraintes. Cette méthode doit être polynomiale
 
-    Pour chaque camion :
-      Tant que nb(lieux_non_livres) != 0:
-        Rechercher le lieu non livré le plus proche;
-        Si (distance > (max_dist - currentKilometer)):
-          Recharger le véhicule;
-        Si (demande > currentCapacity):
-          Aller au dépôt; 
-        Sinon :
-          Sélectionner le lieu;
-          lieux_non_livres -= 1;
-
-
+  Il faut que l'algorithme soit déterministe : il ne doit pas avoir de variables aléatoires.
+  Il faut que l'algorithme respecte toutes les contraintes :
+    - Un camion doit pouvoir faire toute les livraisons sans tomber en panne
+    - Un camion doit livrer un client en une seule fois
+    - Les camions doit respecter l'heure de départ et d'arrivée
+  Voir le code pour plus de détails. Notament, la fonction `buildTours` défini dans `main.py`.
+  
 #### a. Indiquer la complexité de la méthode.
 
-Pour chaque lieu -> O(n)\
-Recherche du lieu -> O(n)\
-Total = O(n^2)
+Pour chaque lieu -> $ O(n) $
+Recherche du lieu -> $ O(n) $
+Total = $ O(n^2) $
 
 
 #### b. Donner un exemple d’instance où la solution renvoyée utilise plus d’un véhicule.
 
-TODO
-
+Pour avoir une solution qui utilise plus d’un véhicule, il faut que le premier véhicule ai une journée de livraison complète.
 
 #### c. Donner un exemple d’instance où la solution renvoyée est optimale.
 
-TODO
+Une des instance qui donne une solution optimale est lorsque le nombre de visite est égale à 1.
 
 ### 2) Proposer une ou plusieurs heuristiques non déterministes pour construire une solution admissible. On veut que les solutions produites soient différentes à chaque exécution. Comment définir « différentes » ?
 
@@ -101,24 +99,19 @@ A la place d'une recherche pour sélectionner le prochain lieu non livré, on pe
 
 En partant d'une solution quelconque :
 
-- On peut échanger deux visites dans un même tour (donc pour un véhicule),
-- On peut retirer une visite d'un tour pour l'ajouter sur un autre tour,
-- Prendre le dernier morceau d'un tour donné (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur un autre tour.
+n : nombre de visites
+m : nombre de véhicules
 
-Tailles des voisinages = S
+- On peut échanger deux visites dans un même tour (donc pour un véhicule) :
+  - Tailles des voisinages : $ O(n^2) $
+  - Renvoie possiblement des solutions non réalisables à partir de solutions réalisables : Oui (Non si on recalcule les retours au dépôt + rechargements de façon optimale)
 
-Complexité :
-
-- O(n^2)
-- O(n^2)
-- a
-
-Renvoie possiblement des solutions non réalisables à partir de solutions réalisables :
-
-- Oui (Non si on recalcule les retours au dépôt + rechargements de façon optimale) 
-- Oui
-- Oui
-
+- On peut retirer une visite d'un tour pour l'ajouter sur un autre tour :
+  - Tailles des voisinages : $ O(n^2) $
+  - Renvoie possiblement des solutions non réalisables à partir de solutions réalisables : Oui
+- Prendre le dernier morceau d'un tour donné (toutes les visites après le dernier 'C' ou 'R') et le déplacer sur un autre tour :
+  - Tailles des voisinages : $ O(m^2) $
+  - Renvoie possiblement des solutions non réalisables à partir de solutions réalisables : Oui
 
 ### 2) Descentes : Améliorez la solution obtenue à l'aide de la méthode déterministe en cherchant à chaque pas la meilleure solution d'un voisinage choisi parmi les 3 proposés. Comparer l'exécution et le résultat obtenus avec le cas où on prend la première solution du voisinage rencontrée qui améliore la solution.
 

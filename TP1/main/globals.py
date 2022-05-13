@@ -9,23 +9,23 @@ from visit import Visit
 class Globals:
 
     def __init__(self):
-        self.listVisits = []
+        self.list_visits = []
         self.distances = None
         self.times = None
-        self.vehicleModel = None
+        self.vehicle_model = None
         self.config = ConfigParser()
 
     def define(self, folder):
         with open(folder + 'visits.csv', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                self.listVisits.append(Visit(int(row['visit_id']), row['visit_name'],
-                                        row['visit_lat'], row['visit_lon'], int(row['demand'])))
+                self.list_visits.append(Visit(int(row['visit_id']), row['visit_name'],
+                                              row['visit_lat'], row['visit_lon'], int(row['demand'])))
 
         self.distances = np.loadtxt(folder + "distances.txt")
         self.times = np.loadtxt(folder + "times.txt")
         self.config.read(folder + "vehicle.ini")
-        self.vehicleModel = Vehicle(
+        self.vehicle_model = Vehicle(
             self.getIntFromIni("max_dist"),
             self.getIntFromIni("capacity"),
             self.getIntFromIni("charge_fast"),

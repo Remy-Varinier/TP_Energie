@@ -6,13 +6,12 @@ from vehicle import Vehicle
 from visit import Visit
 
 
-#TODO comment gérer les exceptions renvoyés par replayTour() ??
-
 class Tour:
     def __init__(self, visits: typing.List[Visit], vehicle: Vehicle, globals: Globals):
         self.visits = visits  #Liste des objets Visit contenus dans ce tour
         self.vehicle = vehicle  #Véhicule parcourant ce tour
         self.str_tour = ""  #Représentation du tour en chaîne de caractères affichable
+        self.starting_visit = None #Visit point de départ, représentant un dépôt
         self.distances = globals.distances #Référence aux variables globales
         self.times = globals.times #Référence aux variables globales
 
@@ -41,15 +40,18 @@ class Tour:
         Elle prend en compte les retours au dépôt (C) et rechargements (R).
 
         :param new_visit: Visit à effectuer
-        :param depot: (Optionnel) Visit représentant le dépôt.
-        Par défaut c'est la Visit de départ dans la liste. Attention peut renvoyer IndexError si cette liste est vide !
+        :param depot: (Optionnel) Visit représentant le dépôt. Par défaut il s'agit de l'attribut starting_visit.
         :return: La visite a pu être effectuée ou non.
         Si ce n'est pas le cas, c'est parce que le véhicule associé a fini sa journée.
         """
 
+        #Si le dépôt n'a pas été fourni, assumer que c'est la première visite de la liste (point de départ)
         if depot is None:
-            depot = self.visits[0]
-        current_visit = self.visits[-1]
+            depot = self.starting_visit
+        try:
+            current_visit = self.visits[-1]
+        except IndexError:
+            current_visit = self.starting_visit
         dist = self.distances[current_visit.visit_id][new_visit.visit_id]
         time = self.times[current_visit.visit_id][new_visit.visit_id]
 
@@ -62,7 +64,10 @@ class Tour:
                 #Le véhicule ne peut pas effectuer la distance puis retourner au dépôt, il faut le recharger
                 self.vehicle.addKilometer(self.distances[current_visit.visit_id][depot.visit_id])
                 self.vehicle.addTime(self.times[current_visit.visit_id][depot.visit_id])
-                self.str_tour += ",R"
+                if len(self.visits) > 0:
+                    #Remarque : Normalement toujours le cas
+                    self.str_tour += ","
+                self.str_tour += "R"
                 self.visits.append(depot.clone())
                 self.visits[-1].visit_name = "R"
                 self.vehicle.recharge()  #charge FAST
@@ -71,7 +76,10 @@ class Tour:
                 #La destination a une demande trop forte, il faut réapprovisionner le véhicule en allant au dépôt
                 self.vehicle.addKilometer(self.distances[current_visit.visit_id][depot.visit_id])
                 self.vehicle.addTime(self.times[current_visit.visit_id][depot.visit_id])
-                self.str_tour += ",C"
+                if len(self.visits) > 0:
+                    #Remarque : Normalement toujours le cas
+                    self.str_tour += ","
+                self.str_tour += "C"
                 self.visits.append(depot.clone())
                 self.visits[-1].visit_name = "C"
                 self.vehicle.resetCapacity()
@@ -81,7 +89,9 @@ class Tour:
                 self.vehicle.addKilometer(dist)
                 self.vehicle.addTime(time)
                 self.vehicle.removeCapacity(new_visit.demand)
-                self.str_tour += "," + str(new_visit.visit_id)
+                if len(self.visits) > 0:
+                    self.str_tour += ","
+                self.str_tour += str(new_visit.visit_id)
                 current_visit = new_visit
                 self.visits.append(new_visit)
                 return True
@@ -103,7 +113,7 @@ class Tour:
                 self.visits.pop()
             self.visits.pop()
             #Si l'on trouve des étapes de retour au dépôt ou de rechargement, il faudra rejouer le Tour entier
-            self.replayTour(self.distances, self.times)
+            self.replayTour()
         else:
             dist = self.distances[self.visits[-1].visit_id][self.visits[-2].visit_id]
             time = self.times[self.visits[-1].visit_id][self.visits[-2].visit_id]
@@ -117,32 +127,42 @@ class Tour:
 
     def replayTour(self):
         """
-        Fonction pour rejouer l'ensemble des tours de cet objet Tour tout en réinitialisant son véhicule
+        Fonction pour reconstruire l'ensemble des tours de cet objet Tour tout en réinitialisant son véhicule
         et en reconstruisant la chaîne de caractères.
         ATTENTION peut lever IndexError ou ValueError si la liste des visites n'est pas valide par exemple !
         Les attributs du tour sont modifiés uniquement si le tour a été rejoué avec succès.
         :return:
         """
-        new_vehicle = self.vehicle.clone()
-        new_str_tour = str(self.visits[0].visit_id)
-        current_visit = self.visits[0]
-        for future_visit in self.visits[1:]:
-            dist = self.distances[current_visit.visit_id][future_visit.visit_id]
-            time = self.times[current_visit.visit_id][future_visit.visit_id]
-            new_vehicle.addKilometer(dist)
-            new_vehicle.addTime(time)
-            if future_visit.visit_name == "C":
-                new_vehicle.setCapacity(new_vehicle.current_capacity)
-                new_str_tour += ",C"
-            elif future_visit.visit_name == "R":
-                new_vehicle.recharge()
-                new_str_tour += ",R"
-            else:
-                new_vehicle.removeCapacity(future_visit.demand)
-                new_str_tour += "," + str(future_visit.visit_id)
-            current_visit = future_visit
-        self.vehicle = new_vehicle
-        self.str_tour = new_str_tour
+        old_visits = self.visits.copy()
+        old_vehicle = self.vehicle.clone()
+        old_str_tour = self.str_tour
+        new_visits = old_visits.copy()
+        #Supprimer les visites C et R
+        indexes = self.findCorRVisits()
+        indexes.reverse()
+        for i in indexes:
+            new_visits.pop(i)
+
+        #Reconstruire l'ensemble des visites
+        try:
+            self.visits = []
+            self.str_tour = ""
+            self.vehicle.resetVehicle()
+            for future_visit in new_visits:
+                visit_added = self.addToVisits(future_visit, self.starting_visit)
+                if not visit_added:
+                    #cannot build the Tour further, thus it is incorrect
+                    self.visits = old_visits
+                    return
+
+        #Si échec, ne rien modifier sur notre objet
+        except IndexError:
+            self.visits = old_visits
+            return
+
+        #Si succès, remplacer les attributs de notre objet
+        self.vehicle = old_vehicle
+        self.str_tour = old_str_tour
 
     def isAValidTour(self) -> bool:
         """
@@ -185,36 +205,35 @@ class Tour:
                 res.append(i)
         return res
 
-    def buildTour(self, mode: str, remaining_visits: typing.List[Visit], depot: Visit) -> typing.List[Visit]:
+    def buildTour(self, mode: str, remaining_visits: typing.List[Visit], start: Visit) -> typing.List[Visit]:
         """
         Fonction pour choisir le mode de construction d'un Tour.
 
         :param mode: Naif | Random | Glouton
         :param remaining_visits: Liste de visites à effectuer
-        :param depot: Visit de départ
+        :param start: Visit de départ
         :raises ValueError : Le mode spécifié est inconnu
         :return: List(Visit) le tour construit
         """
         if mode == "Naif":
-            return self.buildTourNaif(remaining_visits, depot)
+            return self.buildTourNaif(remaining_visits, start)
         elif mode == "Random":
-            return self.buildTourRandom(remaining_visits, depot)
+            return self.buildTourRandom(remaining_visits, start)
         elif mode == "Glouton":
-            return self.buildTourGlouton(remaining_visits, depot)
+            return self.buildTourGlouton(remaining_visits, start)
         else:
             raise ValueError("Unknown mode for buildTour")
 
-    def buildTourNaif(self, remaining_visits: typing.List[Visit], depot: Visit) -> typing.List[Visit]:
+    def buildTourNaif(self, remaining_visits: typing.List[Visit], start: Visit) -> typing.List[Visit]:
         """
         Construire un Tour en mode Naïf : On prend simplement la liste de visites dans l'ordre.
 
         :param remaining_visits:
-        :param depot:
+        :param start:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        self.visits.append(depot)
-        self.str_tour = str(depot.visit_id)
-        self.vehicle.setCapacity(self.vehicle.current_capacity)
+        self.starting_visit = start
+        self.vehicle.resetCapacity()
         while len(remaining_visits) > 0:
             future_visit = remaining_visits[0]
 
@@ -226,18 +245,17 @@ class Tour:
 
         return remaining_visits
 
-    def buildTourRandom(self, remaining_visits: typing.List[Visit], depot: Visit) -> typing.List[Visit]:
+    def buildTourRandom(self, remaining_visits: typing.List[Visit], start: Visit) -> typing.List[Visit]:
         """
         Construire un Tour en mode Random : Sélectionne une visite aléatoire dans la liste à chaque fois.
         Cette méthode est NON-DETERMINISTE !
 
         :param remaining_visits:
-        :param depot:
+        :param start:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        self.visits.append(depot)
-        self.str_tour = str(depot.visit_id)
-        self.vehicle.setCapacity(self.vehicle.current_capacity)
+        self.starting_visit = start
+        self.vehicle.resetCapacity()
         while len(remaining_visits) > 0:
             future_visit = remaining_visits[random.randint(0, len(remaining_visits) - 1)]
 
@@ -249,18 +267,17 @@ class Tour:
 
         return remaining_visits
 
-    def buildTourGlouton(self, remaining_visits: typing.List[Visit], depot: Visit) -> typing.List[Visit]:
+    def buildTourGlouton(self, remaining_visits: typing.List[Visit], start: Visit) -> typing.List[Visit]:
         """
         Construit un Tour en mode Glouton : Recherche la visite la plus proche dans la liste à chaque fois.
 
         :param remaining_visits:
-        :param depot:
+        :param start:
         :return: Tuple(visites restantes, chaîne de caractères)
         """
-        self.visits.append(depot)
-        self.str_tour = str(depot.visit_id)
-        self.vehicle.setCapacity(self.vehicle.current_capacity)
-        current_visit = depot
+        self.starting_visit = start
+        self.vehicle.resetCapacity()
+        current_visit = start
         while len(remaining_visits) > 0:
             future_visit = self.findNearestVisit(remaining_visits, current_visit)
             """ TODO pour plus tard ? nearestDepot = findNearestDepot(listVisits, current_visit)"""

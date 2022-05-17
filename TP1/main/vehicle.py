@@ -104,6 +104,7 @@ class Vehicle:
         start_time_split = self.start_time.split(":")
         self.current_time = int(start_time_split[0]) * 3600 + int(start_time_split[1]) * 60
 
+    #Reset everything without cloning a Vehicle
     def resetVehicle(self):
         self.resetCapacity()
         self.resetKilometer()
@@ -130,6 +131,10 @@ class Vehicle:
         self.resetKilometer()
 
     def clone(self):
+        """
+        Retourne une copie de l'objet Vehicle.
+        :return: Vehicle
+        """
         return Vehicle(self.max_distance, self.max_capacity, self.charge_fast, self.charge_medium, self.charge_slow,
                        self.start_time, self.end_time)
 

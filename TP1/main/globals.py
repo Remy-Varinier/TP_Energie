@@ -16,6 +16,13 @@ class Globals:
         self.config = ConfigParser()
 
     def define(self, folder):
+        """
+        Affecte les valeurs globales list_visits (liste de visites), distances (matrice des distances),
+        times (matrice des temps), vehicle_model (modèle de véhicule).
+
+        :param folder: Chemin du dossier où sont placés les fichiers de configuration
+        visits.csv, distances.txt, times.txt et vehicle.ini
+        """
         with open(folder + 'visits.csv', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:

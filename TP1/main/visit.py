@@ -7,6 +7,10 @@ class Visit:
         self.demand = demand  #Demande en nombre de sacs à livrer
 
     def clone(self):
+        """
+        Retourne une copie de l'objet Visit.
+        :return: Visit
+        """
         return Visit(self.visit_id, self.visit_name, self.visit_lat, self.visit_lon, self.demand)
 
     def __repr__(self):

@@ -7,7 +7,7 @@ from tour import Tour
 
 # VARIABLES DE CONFIGURATION (si on appelle le module sans argument fourni)
 FOLDER = "../Data/lyon_150_1_1/"
-MODE_TOUR = "Naif"
+MODE_TOUR = "Random"
 MODE_VOISINAGE = 2
 
 
@@ -47,18 +47,9 @@ def doVoisinage1(list_tours: typing.List[Tour], tindex: int, v1index: int, v2ind
     :param v1index, v2index: index des visites à échanger
     :return list_tours modifié (si les tours sont valides), False (si un tour n'est pas valide)
     """
-    try:
-        list_tours[tindex].swapVisits(v1index, v2index)
-    except IndexError:
-        print("errur")
+    list_tours[tindex].swapVisits(v1index, v2index)
+    return list_tours
 
-    try:
-        if list_tours[tindex].isAValidTour():
-            return list_tours
-    except IndexError:
-        #Défaire les actions
-        list_tours[tindex].swapVisits(v1index, v2index)
-    return False
 
 
 def doVoisinage2(list_tours: typing.List[Tour], t1index: int, t2index: int, v1index: int,
@@ -76,16 +67,10 @@ def doVoisinage2(list_tours: typing.List[Tour], t1index: int, t2index: int, v1in
         item = list_tours[t1index].visits.pop(v1index)
     except IndexError:
         return False
-    try:
-        list_tours[t2index].visits.insert(v2index, item)
-        #Retirer un tour sur t1Index le rend toujours valide
-        """if list_tours[t2index].isAValidTour():"""
-        return list_tours
-    except IndexError:
-        #Défaire les actions
-        list_tours[t2index].visits.pop(v2index)
-        list_tours[t1index].visits.insert(v1index, item)
-    return False
+    list_tours[t2index].visits.insert(v2index, item)
+    #Retirer un tour sur t1Index le rend toujours valide
+    return list_tours
+
 
 
 def doVoisinage3(list_tours: typing.List[Tour], t1index: int, t2index: int) \
@@ -106,8 +91,7 @@ def doVoisinage3(list_tours: typing.List[Tour], t1index: int, t2index: int) \
         del list_tours[t1index].visits[item_index:]
         list_tours[t2index].visits.extend(list_end)
         #Retirer un tour sur t1Index le rend toujours valide
-        if list_tours[t2index].isAValidTour():
-            return list_tours
+        return list_tours
     except IndexError:
         #Défaire les actions
         list_tours[t1index].visits.extend(list_end)
@@ -126,17 +110,14 @@ def doVoisinage4(list_tours: typing.List[Tour], tindex: int, crindex: int = 0, s
     :param shift: déplacement de l'élement à effectuer (par défaut 1 élement après).
     :return list_tours modifié (si les tours sont valides), False (si un tour n'est pas valide)
     """
-    new_list_tours = list_tours
     try:
-        item_index = new_list_tours[tindex].findCorRVisits()[crindex]
-        item = new_list_tours[tindex].visits.pop(item_index)
-        new_list_tours[tindex].visits.insert(item_index + shift, item)
-        if new_list_tours[tindex].isAValidTour():
-            return new_list_tours
+        item_index = list_tours[tindex].findCorRVisits()[crindex]
+        item = list_tours[tindex].visits.pop(item_index)
     except IndexError:
-        #TODO défaire les actions
-        pass
-    return False
+        return False
+    list_tours[tindex].visits.insert(item_index + shift, item)
+    return list_tours
+
 
 
 def findBestScore(list_tours: typing.List[Tour], mode_voisinage: int = MODE_VOISINAGE) \
@@ -148,6 +129,8 @@ def findBestScore(list_tours: typing.List[Tour], mode_voisinage: int = MODE_VOIS
     :param mode_voisinage:
     :return:
     """
+    #Pour des raisons de performance, appeller isAValidTour() le moins de fois possible ;
+    #le sortir des fonctions doVoisinage()
     list_tours_simule = copy.deepcopy(list_tours)
     best_score = sum(tour.calcKilometre() for tour in list_tours_simule) #TODO bug sur best_score quelquefois, augmente par rapport au précédent
     if mode_voisinage == 1:
@@ -162,10 +145,12 @@ def findBestScore(list_tours: typing.List[Tour], mode_voisinage: int = MODE_VOIS
                         v2index += 1
                         continue
                     else:
-                        new_score = sum(tour.calcKilometre() for tour in list_tours_simule)
+                        new_score = sum(tour.calcKilometre() for tour in voisin)
                         if new_score < best_score:
-                            print(f"Voisinage 1 : Found better score for tindex {tindex} v1index {v1index} v2index {v2index}")
-                            return voisin, new_score
+                            #Tester la reconstruction du tour
+                            if voisin[tindex].isAValidTour():
+                                print(f"Voisinage 1 : Found better score for tindex {tindex} v1index {v1index} v2index {v2index}")
+                                return voisin, new_score
                     v2index += 1
                 v1index += 1
             tindex += 1
@@ -181,15 +166,16 @@ def findBestScore(list_tours: typing.List[Tour], mode_voisinage: int = MODE_VOIS
                     v2index = v1index
                     while v2index < len(list_tours_simule[t2index].visits):
                         voisin = doVoisinage2(list_tours_simule, t1index, t2index, v1index, v2index)
+                        #list_tours_simule peut remplacer voisin ?
                         if not voisin:
                             v2index += 1
                             continue
                         else:
-                            #TODO pour des raisons de performance, il faut appeller isAValidTour() le moins de fois possible ; sortir des fonctions doVoisinage()
-                            new_score = sum(tour.calcKilometre() for tour in list_tours_simule)
+                            new_score = sum(tour.calcKilometre() for tour in voisin)
                             if new_score < best_score:
-                                #Tester la reconstruction du tour
-                                if voisin[t2index].isAValidTour():
+                                #Tester la reconstruction du tour :
+                                #Attention bien tester les deux tours même si celui de t1 sera toujours valide
+                                if voisin[t1index].isAValidTour() and voisin[t2index].isAValidTour():
                                     print(f"Voisinage 2 : Found better score for t1index {t1index} t2index {t2index} v1index {v1index} v2index {v2index}")
                                     return voisin, new_score
                         v2index += 1
@@ -198,9 +184,49 @@ def findBestScore(list_tours: typing.List[Tour], mode_voisinage: int = MODE_VOIS
             t1index += 1
         return list_tours_simule, best_score
     elif mode_voisinage == 3:
-        pass
+        t1index = 0
+        while t1index < len(list_tours_simule):
+            t2index = t1index
+            while t2index < len(list_tours_simule):
+                voisin = doVoisinage3(list_tours_simule, t1index, t2index)
+                #list_tours_simule peut remplacer voisin ?
+                if not voisin:
+                    t2index += 1
+                    continue
+                else:
+                    new_score = sum(tour.calcKilometre() for tour in voisin)
+                    if new_score < best_score:
+                        #Tester la reconstruction du tour
+                        #Attention bien tester les deux tours même si celui de t1 sera toujours valide
+                        if voisin[t1index].isAValidTour() and voisin[t2index].isAValidTour():
+                            print(f"Voisinage 3 : Found better score for t1index {t1index} t2index {t2index}")
+                            return voisin, new_score
+                t2index += 1
+            t1index += 1
+        return list_tours_simule, best_score
     elif mode_voisinage == 4:
-        pass
+        tindex = 0
+        while tindex < len(list_tours_simule):
+            crindex = 0
+            while crindex < 10:
+                shift = -5
+                while shift < 6:
+                    voisin = doVoisinage4(list_tours_simule, tindex, crindex, shift)
+                    #list_tours_simule peut remplacer voisin ?
+                    if not voisin:
+                        shift += 1
+                        continue
+                    else:
+                        new_score = sum(tour.calcKilometre() for tour in voisin)
+                        if new_score < best_score:
+                            #Tester la reconstruction du tour
+                            if voisin[tindex].isAValidTour():
+                                print(f"Voisinage 4 : Found better score for tindex {tindex} crindex {crindex} shift {shift} ")
+                                return voisin, new_score
+                    shift += 1
+                crindex += 1
+            tindex += 1
+        return list_tours_simule, best_score
     else:
         raise ValueError("Unknown mode parameter for findBestVoisinage")
 

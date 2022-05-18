@@ -22,11 +22,12 @@ class Tour:
 
         :return: sum(distance entre chaque visite)
         """
-        if len(self.visits) < 2:
+
+        if len(self.visits) < 1:
             return 0
         i = 0
         j = 1
-        total = 0
+        total = self.distances[self.starting_visit.visit_id][self.visits[0].visit_id]
         while j < len(self.visits):
             total += self.distances[self.visits[i].visit_id][self.visits[j].visit_id]
             i += 1
@@ -153,16 +154,20 @@ class Tour:
                 if not visit_added:
                     #cannot build the Tour further, thus it is incorrect
                     self.visits = old_visits
+                    self.vehicle = old_vehicle
+                    self.str_tour = old_str_tour
                     return
 
         #Si échec, ne rien modifier sur notre objet
         except IndexError:
             self.visits = old_visits
+            self.vehicle = old_vehicle
+            self.str_tour = old_str_tour
             return
 
-        #Si succès, remplacer les attributs de notre objet
-        self.vehicle = old_vehicle
-        self.str_tour = old_str_tour
+        #Si succès, laisser les attributs de notre objet
+        return
+
 
     def isAValidTour(self) -> bool:
         """

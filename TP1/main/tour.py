@@ -181,7 +181,7 @@ class Tour:
                 return True
             self.replayTour()
             return True
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, AttributeError):
             return False
 
     def swapVisits(self, i, j):

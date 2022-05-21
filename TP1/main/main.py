@@ -7,7 +7,7 @@ from tour import Tour
 
 # VARIABLES DE CONFIGURATION (si on appelle le module sans argument fourni)
 FOLDER = "../Data/lyon_150_1_1/"
-MODE_TOUR = "Random"
+MODE_TOUR = "Naif"
 MODE_VOISINAGE = 2
 
 
@@ -263,15 +263,17 @@ def main(the_mode_tour=MODE_TOUR, the_folder=FOLDER, the_mode_voisinage=MODE_VOI
         print(tour.str_tour)
 
 
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--folder', metavar='path', required=False, default=FOLDER,
                         help='relative path to data folder containing all needed files')
-    parser.add_argument('--mode', metavar='path', required=False, default=MODE_TOUR,
+    parser.add_argument('--mode', metavar='name', required=False, default=MODE_TOUR,
                         help='chosen mode to build tours. Values : Glouton | Naif | Random')
-    parser.add_argument('--neighbour', metavar='path', required=False, default=MODE_VOISINAGE,
+    parser.add_argument('--neighbour', metavar='number', required=False, default=MODE_VOISINAGE,
                         help='chosen mode to find neighbours. Values : 1 | 2 | 3 | 4')
     args = parser.parse_args()
     main(the_mode_tour=args.mode, the_folder=args.folder, the_mode_voisinage=args.neighbour)

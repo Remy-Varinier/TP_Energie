@@ -121,11 +121,11 @@ class Vehicle:
         :raises ValueError : Le mode spécifié est inconnu
         """
         if recharge_mode == ChargeEnum.FAST:
-            self.current_time += self.charge_fast
+            self.current_time += self.charge_fast * 60
         elif recharge_mode == ChargeEnum.MEDIUM:
-            self.current_time += self.charge_medium
+            self.current_time += self.charge_medium * 60
         elif recharge_mode == ChargeEnum.SLOW:
-            self.current_time += self.charge_slow
+            self.current_time += self.charge_slow * 60
         else:
             raise ValueError("Invalid ChargeEnum")
         self.resetKilometer()

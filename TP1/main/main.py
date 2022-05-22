@@ -6,7 +6,7 @@ from globals import Globals
 from tour import Tour
 
 # VARIABLES DE CONFIGURATION (si on appelle le module sans argument fourni)
-FOLDER = "../Data/lyon_150_1_1/"
+FOLDER = "../Data/lyon_100_1_1/"
 MODE_TOUR = "Naif"
 MODE_VOISINAGE = 2
 

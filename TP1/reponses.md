@@ -115,12 +115,55 @@ m : nombre de véhicules
 
 ### 2) Descentes : Améliorez la solution obtenue à l'aide de la méthode déterministe en cherchant à chaque pas la meilleure solution d'un voisinage choisi parmi les 3 proposés. Comparer l'exécution et le résultat obtenus avec le cas où on prend la première solution du voisinage rencontrée qui améliore la solution.
 
+Dans le code : on cherche à améliorer le score d'une solution (nombre total de kilomètres parcourus par tous les véhicules) à travers la fonction findBestScore().
+Cette fonction exécute, pour un mode de voisinage donné, toutes les possibilités de voisinage dans l'ordre puis retourne le premier qui améliore la solution.
+
+Pour trouver le minimum local, il suffit de répéter cette fonction jusqu'à ce qu'il ne soit plus possible d'améliorer le score.
+Cf output.txt pour des exemples de résultat.
+
+Dans le cas de la version naïve avec le voisinage 2 :
+Le score de base après construction est de `608.054`,
+après application du voisinage on trouve un minimum local ayant un score de `586.7660000000001`.
+
+
 ### 3) Descentes avec départ "aléatoire". Utiliser l'heuristique constructive non-déterministe pour générer plusieurs solutions et améliorer chacune d'elle.
+
+Cf la construction de tours avec le mode de tours "Random".
 
 ### Vitesse de rechargement et flotte de véhicules
 
 ### 4) Pour chaque taille d'instance, quel est en général le nombre de véhicules nécessaires et le nombre de rechargements de la batterie dans chacun des cas rechargement rapide, rechargement medium, rechargement lent ?
 
+Pour des tailles d'instance allant jusqu'à 100 visites environ, on n'a besoin que d'un véhicule. Entre 100 et 200 visites, il nous en faut deux.
+
+Nombre de véhicules nécessaires :
+
+|             | FAST   | MEDIUM | SLOW |
+|-------------|--------|--------|------|
+| 40 visites  | 1      | 1      | 1    |
+| 100 visites | 1 ou 2 | 2      | 3    |
+| 150 visites | 2      | 3      | 4    |
+| 200 visites | 2      | 3      | 5    |
+
+Nombre de rechargements pour le premier véhicule (en moyenne) :
+
+|             | FAST | MEDIUM | SLOW |
+|-------------|------|--------|------|
+| 40 visites  | 1    | 1      | 1    |
+| 100 visites | 2    | 2      | 1    |
+| 150 visites | 2    | 2      | 1    |
+| 200 visites | 2    | 2      | 1    |
+
 ### 5) Quel type de rechargement conseillerez-vous pour cette flotte de véhicules ?
 
-### 6) Si on voulait renouveler la flotte de véhicules pour qu'ils puissent effectuer plus de kilomètres avant rechargement, quelle autonomie minimum serait appropriée pour éviter dans la plupart des cas les rechargmeents en cours de journée ? Quel serait alors la nombre de véhicules nécessaires pour les différentes tailles d'instances ?
+Rechargement rapide (Fast) parce qu'il prend moins de temps tout simplement.
+
+### 6) Si on voulait renouveler la flotte de véhicules pour qu'ils puissent effectuer plus de kilomètres avant rechargement, quelle autonomie minimum serait appropriée pour éviter dans la plupart des cas les rechargements en cours de journée ? Quel serait alors la nombre de véhicules nécessaires pour les différentes tailles d'instances ?
+
+L'autonomie minimum pour éviter les rechargements serait la distance totale que parcourt un véhicule durant une journée entière (car elle ne peut pas en faire plus par contrainte de temps).
+
+Plus haut résultat obtenu en mode Naif avec une autonomie de 150 km : Le premier véhicule effectue 2 recharges, et termine sa journée avec 101.026 km parcourus. Ce qui donne un total de 401.026 km.
+
+En affinant la configuration, on observe qu'une autonomie de 450 km au minimum est suffisante pour éviter les rechargements en cours de journée.
+
+Avec cette nouvelle autonomie, il est possible d'économiser un véhicule dans la solution, cela dépend de la taille de l'instance (par exemple 100 visites).

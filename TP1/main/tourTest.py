@@ -24,7 +24,6 @@ class TestTour(unittest.TestCase):
         (self.tours_test, self.str_tours_test) = main.buildTours(self.my_globals, mode="Naif")
 
     def testCalcKilometre(self):
-        #(None) -> float
         self.assertEqual(self.tour_empty.calcKilometre(), 0)
         #Echoue si le starting_visit n'est pas defini
         self.assertRaises(AttributeError, self.tour_sans_depot.calcKilometre)
@@ -32,20 +31,17 @@ class TestTour(unittest.TestCase):
         self.assertNotEqual(sum(x.calcKilometre() for x in self.tours_test), 0)
 
     def testAddToVisits(self):
-        #(Visit, Optional[Visit]) -> bool
         self.assertEqual(len(self.tour_1_visit.visits), 1)
         self.assertEqual(self.tour_1_visit.addToVisits(self.my_visits[3]), True)
         self.assertEqual(len(self.tour_1_visit.visits), 2)
         self.assertEqual(self.tour_1_visit.visits[1], self.my_visits[3])
 
     def testRemoveLastVisit(self):
-        #Action
         self.assertRaises(IndexError, self.tour_empty.removeLastVisit)
         self.tour_1_visit.removeLastVisit()
         self.assertEqual(len(self.tour_1_visit.visits), 0)
 
     def testReplayTour(self):
-        #Action
         tours_test_copy = copy.deepcopy(self.tours_test)
         for t in self.tours_test:
             t.replayTour()
@@ -53,13 +49,11 @@ class TestTour(unittest.TestCase):
         self.assertEqual(repr(self.tours_test), repr(tours_test_copy))
 
     def testIsAValidTour(self):
-        #(None) -> bool
         self.assertTrue(self.tour_empty.isAValidTour())
         self.assertFalse(self.tour_sans_depot.isAValidTour())
         self.assertTrue(self.tour_1_visit.isAValidTour())
 
     def testSwapVisits(self):
-        #(int, int)
         self.tour_1_visit.addToVisits(self.my_visits[3])
         #New visit has been added to index 1
         self.assertEqual(self.tour_1_visit.visits[1], self.my_visits[3])
@@ -68,7 +62,6 @@ class TestTour(unittest.TestCase):
         self.assertEqual(self.tour_1_visit.visits[0], self.my_visits[3])
 
     def testFindCorRVisits(self):
-        #(bool, bool) -> List[int]
         self.tour_1_visit.visits.append(self.visit_C)
         self.tour_1_visit.visits.append(self.my_visits[3])
         self.tour_1_visit.visits.append(self.visit_R)
@@ -78,12 +71,10 @@ class TestTour(unittest.TestCase):
         self.assertEqual(self.tour_1_visit.findCorRVisits(False, False), [])
 
     def testBuildTour(self):
-        #(str, List[Visit], Visit) -> List[Visit]
         self.assertRaises(ValueError, self.tour_1_visit.buildTour, "aaa", self.my_globals.list_visits, self.depot) #Cas mode invalide
 
     """
     def testFindNearestVisit(self):
-        #(List[Visit], Visit) -> Visit
         visit_near = Visit(998, "V998", 45.7640205, 4.8901686, 10)
         visit_far = Visit(999, "V999", 35.7640211, 14.8901678, 10)
         future_visits = [visit_near, visit_far]
@@ -91,7 +82,6 @@ class TestTour(unittest.TestCase):
                          visit_near)
 
     def testFindNearestDepot(self):
-        #(List[Visit], Visit) -> Visit
         visit_near = Visit(998, "V998", 45.7640205, 4.8901686, 10)
         visit_far = Visit(999, "V999", 40.7640211, 9.8901678, 10)
         depot_near = Visit(0, "Depot", 35.7640211, 14.8901678, 10)

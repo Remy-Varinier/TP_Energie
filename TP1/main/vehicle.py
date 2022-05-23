@@ -41,7 +41,7 @@ class Vehicle:
         return self.current_capacity - charge >= 0
 
     def setCapacity(self, charge):
-        if not (charge >= 0 or charge <= self.max_capacity):
+        if charge < 0 or charge > self.max_capacity:
             raise ValueError("Incorrect capacity set for this vehicle : " + repr(self))
         self.current_capacity = charge
 
@@ -66,7 +66,7 @@ class Vehicle:
         return self.current_distance - kilometre >= 0
 
     def setKilometer(self, kilometre):
-        if not (kilometre >= 0 or kilometre <= self.max_distance):
+        if kilometre < 0 or kilometre > self.max_distance:
             raise ValueError("Incorrect kilometers amount set for this vehicle : " + repr(self))
         self.current_distance = kilometre
 
@@ -95,8 +95,8 @@ class Vehicle:
     def setTime(self, time):
         split_start_time = self.start_time.split(":")
         split_end_time = self.end_time.split(":")
-        if not (time >= int(split_start_time[0]) * 3600 + int(split_start_time[1]) * 60
-                or time <= int(split_end_time[0]) * 3600 + int(split_end_time[1]) * 60):
+        if (time < int(split_start_time[0]) * 3600 + int(split_start_time[1]) * 60)\
+                or (time > int(split_end_time[0]) * 3600 + int(split_end_time[1]) * 60):
             raise ValueError("Incorrect time set for this vehicle : " + repr(self))
         self.current_time = time
 

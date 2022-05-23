@@ -1,4 +1,4 @@
-Pour lancer le projet : Appeller le script main.py contenu dans TP1/main.
+Pour lancer le projet : Appeller le script main.py contenu dans TP/main.
 2 méthodes sont possibles pour renseigner les options :
 - Les renseigner sous forme d'arguments :
   ````
